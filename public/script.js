@@ -1,8 +1,9 @@
 // --- CONFIG ---
-const API_URL = "http://localhost:3000/api/reports";
+const API_URL = "https://trace-6vjy.onrender.com/api/reports";
+
 
 // --- MAP SETUP ---
-const map = L.map('map').setView([43.65, -79.38], 12); // Default: Toronto
+const map = L.map('map').setView([45.4215, -75.6993], 12); // Default: Ottawa
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; OpenStreetMap contributors'
 }).addTo(map);
