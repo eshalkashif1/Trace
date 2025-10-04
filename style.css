@@ -1,0 +1,63 @@
+/* --- GENERAL PAGE STYLING --- */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  text-align: center;
+  background-color: #fafafa;
+}
+
+#map {
+  height: 85vh;
+  width: 100%;
+  margin: 0 auto;
+  border-top: 2px solid #ccc;
+  border-bottom: 2px solid #ccc;
+}
+
+/* --- REPORT FORM POPUP --- */
+#reportForm {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  border: 1px solid #aaa;
+  padding: 20px;
+  width: 320px;
+  max-width: 90%;
+  box-shadow: 0 0 15px rgba(0,0,0,0.25);
+  border-radius: 10px;
+  z-index: 1000;
+}
+
+.hidden {
+  display: none;
+}
+
+/* --- BUTTONS --- */
+button {
+  margin: 6px;
+  padding: 8px 12px;
+  border: none;
+  background: #0077b6;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+button:hover {
+  background: #023e8a;
+}
+
+/* --- SMALL SCREENS --- */
+@media (max-width: 600px) {
+  #map {
+    height: 75vh;
+  }
+
+  #reportForm {
+    width: 90%;
+    padding: 15px;
+  }
+}
