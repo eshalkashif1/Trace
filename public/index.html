@@ -29,6 +29,17 @@
     <button id="cancelBtn">Cancel</button>
   </div>
 
+  <!-- Live location consent modal (anonymous, local only) -->
+  <div id="locOverlay" class="overlay hidden"></div>
+  <div id="locConsent" class="modal hidden" role="dialog" aria-labelledby="locTitle" aria-modal="true">
+    <h3 id="locTitle">Allow anonymous live location?</h3>
+    <p>Your location is used only on this device to show a moving dot. It is <b>not</b> uploaded.</p>
+    <div class="modal-actions">
+      <button id="allowLocBtn">Allow</button>
+      <button id="denyLocBtn" class="secondary">Not now</button>
+    </div>
+  </div>
+
   <!-- Leaflet & Script -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="script.js"></script>
