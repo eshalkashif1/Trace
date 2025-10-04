@@ -1,7 +1,6 @@
 // --- CONFIG ---
 const API_URL = "https://trace-6vjy.onrender.com/api/reports";
 
-
 // --- MAP SETUP ---
 const map = L.map('map').setView([45.4215, -75.6993], 12); // Default: Ottawa
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -22,6 +21,12 @@ async function loadReports() {
   try {
     const res = await fetch(API_URL);
     const data = await res.json();
+
+    // Clear old markers before re-adding (prevents duplicates)
+    map.eachLayer(layer => {
+      if (layer instanceof L.Marker) map.removeLayer(layer);
+    });
+
     data.forEach(r => addMarker(r));
   } catch (err) {
     console.error("Error loading reports:", err);
@@ -55,17 +60,22 @@ saveBtn.addEventListener('click', async () => {
   };
 
   try {
-    await fetch(API_URL, {
+    const res = await fetch(API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(report),
     });
 
-    addMarker(report);
-    resetForm();
+    if (res.ok) {
+      await loadReports(); // ✅ Refresh all markers from DB
+    } else {
+      alert("Error saving report. Please try again.");
+    }
   } catch (err) {
-    console.error("Error saving report:", err);
+    console.error("Error submitting report:", err);
   }
+
+  resetForm();
 });
 
 // --- CANCEL FORM ---
