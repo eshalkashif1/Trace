@@ -1,0 +1,12 @@
+# Ignore dependencies
+node_modules/
+
+# Ignore database files
+database.db
+
+# Ignore environment variables
+.env
+
+# Ignore system and log files
+npm-debug.log
+.DS_Store
