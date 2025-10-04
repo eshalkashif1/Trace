@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SafeMap - Report Harassment</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>🧭 SafeMap: Track Harassment Locations</h1>
+  <p>Click anywhere on the map to add a report. All data stays in your browser.</p>
+  <div id="map"></div>
+
+  <!-- Popup form -->
+  <div id="reportForm" class="hidden">
+    <h3>Add Report</h3>
+    <label>Date/Time:</label>
+    <input type="datetime-local" id="incidentTime" /><br>
+    <label>Description:</label>
+    <textarea id="incidentDesc" rows="3"></textarea><br>
+    <button id="saveBtn">Save</button>
+    <button id="cancelBtn">Cancel</button>
+  </div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
