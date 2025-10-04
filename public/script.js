@@ -15,6 +15,7 @@ const descInput = document.getElementById('incidentDesc');
 const timeInput = document.getElementById('incidentTime');
 
 let clickedCoords = null;
+let tempMarker = null;
 
 // --- LOAD EXISTING REPORTS ---
 async function loadReports() {
@@ -27,6 +28,7 @@ async function loadReports() {
       if (layer instanceof L.Marker) map.removeLayer(layer);
     });
 
+    // Add each marker from DB
     data.forEach(r => addMarker(r));
   } catch (err) {
     console.error("Error loading reports:", err);
@@ -46,6 +48,14 @@ function addMarker(r) {
 // --- ON MAP CLICK: OPEN FORM ---
 map.on('click', e => {
   clickedCoords = e.latlng;
+
+  // Remove previous temporary marker if exists
+  if (tempMarker) map.removeLayer(tempMarker);
+
+  // Add a temporary marker at click position
+  tempMarker = L.marker(clickedCoords).addTo(map);
+
+  // Show form
   form.classList.remove('hidden');
 });
 
@@ -67,7 +77,14 @@ saveBtn.addEventListener('click', async () => {
     });
 
     if (res.ok) {
-      await loadReports(); // ✅ Refresh all markers from DB
+      // 🧹 Remove the temporary marker before reloading
+      if (tempMarker) {
+        map.removeLayer(tempMarker);
+        tempMarker = null;
+      }
+
+      // ✅ Refresh all pins from database
+      await loadReports();
     } else {
       alert("Error saving report. Please try again.");
     }
@@ -86,6 +103,12 @@ function resetForm() {
   descInput.value = '';
   timeInput.value = '';
   clickedCoords = null;
+
+  // Remove temporary marker if present
+  if (tempMarker) {
+    map.removeLayer(tempMarker);
+    tempMarker = null;
+  }
 }
 
 // --- INITIALIZE ---
