@@ -13,6 +13,10 @@ const saveBtn = document.getElementById('saveBtn');
 const cancelBtn = document.getElementById('cancelBtn');
 const descInput = document.getElementById('incidentDesc');
 const timeInput = document.getElementById('incidentTime');
+const useLocBtn = document.getElementById('useLocationBtn');
+const locStatus = document.getElementById('locStatus');
+let currentLocMarker = null; // to show where we set the location
+
 
 let clickedCoords = null;
 
@@ -74,6 +78,7 @@ saveBtn.addEventListener('click', async () => {
   }
 });
 
+
 // --- CANCEL FORM ---
 cancelBtn.addEventListener('click', resetForm);
 
@@ -83,6 +88,67 @@ function resetForm() {
   timeInput.value = '';
   clickedCoords = null;
 }
+
+function fuzzCoord(lat, lng, meters = 120) {
+  const r = meters / 111320; // ≈ meters per degree latitude
+  const u = Math.random(), v = Math.random();
+  const w = r * Math.sqrt(u);
+  const t = 2 * Math.PI * v;
+  const latOff = w * Math.cos(t);
+  const lngOff = w * Math.sin(t) / Math.cos(lat * Math.PI / 180);
+  return { lat: lat + latOff, lng: lng + lngOff };
+}
+
+useLocBtn.addEventListener('click', () => {
+  if (!navigator.geolocation) {
+    locStatus.textContent = 'Geolocation not supported in this browser.';
+    return;
+  }
+
+  locStatus.textContent = 'Locating…';
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const { latitude, longitude, accuracy } = pos.coords;
+
+      // (Optional) jitter location ~120m for privacy
+      const { lat, lng } = fuzzCoord(latitude, longitude, 120);
+
+      // Set the same state your map-click uses
+      clickedCoords = L.latLng(lat, lng);
+
+      // Show/update a marker so the user sees where it will be saved
+      if (currentLocMarker) currentLocMarker.remove();
+      currentLocMarker = L.circleMarker([lat, lng], {
+        radius: 8, color: '#0a0', weight: 2, fillOpacity: 0.6
+      })
+        .addTo(map)
+        .bindPopup(`Your location (±${Math.round(accuracy)}m)`);
+
+      // Zoom there and open the form if it’s hidden
+      map.setView([lat, lng], 15);
+      form.classList.remove('hidden');
+
+      // Optional: prefill time to “now”
+      if (timeInput) {
+        const now = new Date();
+        // if your input is datetime-local:
+        // timeInput.value = new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,16);
+      }
+
+      locStatus.textContent = 'Location set.';
+    },
+    (err) => {
+      const msg =
+        err.code === 1 ? 'Permission denied' :
+        err.code === 2 ? 'Position unavailable' :
+        err.code === 3 ? 'Timeout' : 'Error';
+      locStatus.textContent = `Couldn’t get location: ${msg}.`;
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+  );
+});
+
 
 // --- INITIALIZE ---
 loadReports();
