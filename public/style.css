@@ -384,3 +384,58 @@ body {
 .dark #directions { background: #16161d; border-right: 1px solid #2a2a35; }
 .dark #reportForm, .dark .modal { background: #16161d; color: #ececf1; border: 1px solid #2a2a35; box-shadow: 0 12px 36px rgba(0,0,0,0.5); }
 .dark .overlay { background: rgba(0,0,0,0.5); }
+
+.resources-list {
+  max-width: 1000px;
+  margin: 20px auto;
+  padding-left: 30px;
+  text-align: left;
+  line-height: 1;
+  font-size: 1em;
+}
+
+.resources-list li {
+  margin-bottom: 10px;
+  color: #333;
+}
+
+
+
+/* === ABOUT PAGE LAYOUT === */
+.about-section {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 40px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 40px 50px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin: 50px auto;
+  max-width: 1000px;
+}
+
+/* TEXT HALF */
+.about-text {
+  width: 63%;              /* exactly half the width */
+  line-height: 1.6;
+  color: #222;
+}
+
+
+/* Image sits to the right */
+.about-image {
+  flex: 0 0 25%;      /* fixed width: 35% */
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+}
+
+.about-image img {
+  width: 60%;           /* was 80% — makes it a bit larger */
+  max-width: 300px;     /* was 220px — allows a larger image */
+  border-radius: 12px;
+  margin-top: -310px;    /* negative margin moves it higher */
+  margin-right: 20px;   /* move image left */
+  transition: transform 0.2s ease;
+}
