@@ -7,6 +7,31 @@ Trace was designed to help community safety through data visibility, especially 
 ## Live Website
 Access it here: https://trace-6vjy.onrender.com/
 
+# To Run Locally
+Make sure you have the following installed:
+Node.js (v18 or newer)
+npm (comes with Node)
+
+1. Clone this repository:
+```bash
+git clone git clone https://github.com/eshalkashif1/Trace.git
+```
+2. Navigate to the project directory:
+```bash
+cd Trace
+```
+3. Install dependencies
+```bash
+npm install 
+```
+4. Run the program with the command:
+```bash
+node server.js
+```
+5. Go to:
+http://localhost:3000
+
+
 ### 🌟 Features
 - View reported harassment locations on the map
 - Click anywhere to submit a new report
