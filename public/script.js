@@ -4,6 +4,10 @@ const OSRM_BASE = "https://router.project-osrm.org"; // demo server (OK for hack
 const NOMINATIM = "https://nominatim.openstreetmap.org/search";
 const REVERSE = "https://nominatim.openstreetmap.org/reverse";
 
+// Consent/local-storage keys
+const CONSENT_KEY = 'trace:live-consent';
+
+
 // Ottawa bounds + Carleton bias (for geocoding + map bounds)
 const OTTAWA_BOUNDS = [[45.15, -76.35],[45.62, -75.2]];
 const CARLETON_CENTRE = [45.3876, -75.6970];
@@ -83,6 +87,28 @@ const saveBtn = document.getElementById('saveBtn');
 const cancelBtn = document.getElementById('cancelBtn');
 const descInput = document.getElementById('incidentDesc');
 const timeInput = document.getElementById('incidentTime');
+
+// --- DOM HOOKS YOU'RE USING LATER ---
+const fromInput   = document.getElementById('fromInput');
+const toInput     = document.getElementById('toInput');
+const modeSelect  = document.getElementById('mode');
+const avoidRiskChk= document.getElementById('avoidRisk');
+const routeBtn    = document.getElementById('routeBtn');
+const swapBtn     = document.getElementById('swapBtn');
+const stepsEl     = document.getElementById('steps');
+
+const useLiveBtn  = document.getElementById('useLiveBtn');
+const allowLocBtn = document.getElementById('allowLocBtn');
+const denyLocBtn  = document.getElementById('denyLocBtn');
+const locOverlay  = document.getElementById('locOverlay');
+const locConsent  = document.getElementById('locConsent');
+
+const quickBtn    = document.getElementById('quickReportBtn'); // ← floating button
+const useLocBtn   = document.getElementById('useLocationBtn'); // ← in-form button (optional)
+const locStatus   = document.getElementById('locStatus');
+
+let currentLocMarker = null; // used in quick-button handler
+
 
 let clickedCoords = null;
 let reports = [];
@@ -222,7 +248,7 @@ async function loadReports() {
 }
 
 // --- ADD MARKER TO MAP ---
-function addMarker(r) {
+function addReportMarker(r) {
   const marker = L.marker([r.lat, r.lon]).addTo(map);
   marker.bindPopup(`
     <b>Harassment Report</b><br>
@@ -230,6 +256,11 @@ function addMarker(r) {
     <small>${new Date(r.occurred_at).toLocaleString()}</small>
   `);
 }
+
+
+// Alias so existing calls don't crash
+//const addReportMarker = addMarker;
+
 
 // --- ON MAP CLICK: OPEN FORM ---
 map.on('click', e => {
@@ -254,6 +285,7 @@ saveBtn.addEventListener('click', async () => {
     lat: clickedCoords.lat,
     lon: clickedCoords.lng,
     description: descInput.value || "No description",
+    occurred_at: new Date().toISOString()
   };
 
   try {
@@ -263,7 +295,7 @@ saveBtn.addEventListener('click', async () => {
       body: JSON.stringify(report),
     });
 
-    addReportMarker({ ...report, occurred_at: new Date().toISOString() });
+    addReportMarker(report);
     reports.push(report);
     drawHotspots();
     resetForm();
@@ -414,6 +446,89 @@ useLiveBtn.addEventListener('click', async () => {
     showLocModal();
   }
 });
+
+// helper: approx IP-based location fallback (HTTPS; coarse accuracy)
+async function getApproxIPLocation() {
+  try {
+    const res = await fetch('https://ipapi.co/json/');
+    const j = await res.json();
+    if (j && j.latitude && j.longitude) {
+      return { latitude: +j.latitude, longitude: +j.longitude, accuracy: 5000 };
+    }
+  } catch (_) {}
+  throw new Error('ip_fallback_failed');
+}
+
+// single handler so we can call from both GPS and fallback
+function handleQuickReport(lat, lng, accuracy = 100) {
+  // privacy jitter (~120 m)
+  const { lat: jLat, lng: jLng } = fuzzCoord(lat, lng, 120);
+  clickedCoords = L.latLng(jLat, jLng);
+
+  // marker feedback
+  if (currentLocMarker) currentLocMarker.remove();
+  currentLocMarker = L.circleMarker([jLat, jLng], {
+    radius: 8, color: '#0a0', weight: 2, fillOpacity: 0.6
+  }).addTo(map).bindPopup(`Using your location (±${Math.round(accuracy)}m)`).openPopup();
+
+  // focus map + show form
+  map.setView([jLat, jLng], 15);
+  form.classList.remove('hidden');
+  descInput && descInput.focus();
+}
+
+// delegate the click so it always binds
+document.addEventListener('click', async (ev) => {
+  const btn = ev.target.closest('#quickReportBtn');
+  if (!btn) return;
+
+  console.log('[Trace] quickReportBtn clicked');
+  btn.disabled = true;
+  const original = btn.textContent;
+  btn.textContent = 'Locating…';
+
+  // Try precise browser geolocation first
+  if ('geolocation' in navigator) {
+    let timedOut = false;
+    const t = setTimeout(() => { timedOut = true; }, 12000);
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        clearTimeout(t);
+        if (timedOut) return; // ignore late callback
+        const { latitude, longitude, accuracy } = pos.coords;
+        handleQuickReport(latitude, longitude, accuracy);
+        btn.textContent = original; btn.disabled = false;
+      },
+      async (err) => {
+        console.warn('[Trace] geolocation error:', err);
+        try {
+          const approx = await getApproxIPLocation();
+          handleQuickReport(approx.latitude, approx.longitude, approx.accuracy);
+        } catch {
+          alert('Could not get your location. You can still click the map to place a report.');
+        }
+        btn.textContent = original; btn.disabled = false;
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+    return;
+  }
+
+  // No geolocation at all → approximate fallback
+  try {
+    const approx = await getApproxIPLocation();
+    handleQuickReport(approx.latitude, approx.longitude, approx.accuracy);
+  } catch {
+    alert('Geolocation not supported. Click the map to place a report.');
+  }
+  btn.textContent = original; btn.disabled = false;
+});
+
+
+
+
+
 
 // ================= ROUTING (OSRM + Risk) =================
 routeBtn.addEventListener('click', recalcRouteDebounced);

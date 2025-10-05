@@ -89,6 +89,29 @@ body {
   border: none;
 }
 
+/* ===== FLOATING ACTION BUTTON (FAB) ===== */
+.fab {
+  position: fixed;
+  right: 16px;
+  bottom: 16px; /* for iOS safe area: bottom: calc(16px + env(safe-area-inset-bottom)); */
+  z-index: 1150;            /* above map/controls, below overlay/modal */
+  padding: 10px 14px;
+  border: none;
+  border-radius: 999px;
+  background: #111827;      /* slate-900 */
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 6px 16px rgba(0,0,0,.25);
+  cursor: pointer;
+}
+.fab:hover { filter: brightness(1.1); }
+.fab:disabled { opacity: .7; cursor: wait; }
+
+/* Dark mode version */
+.dark .fab { background: #2b2b3a; color: #eaeafd; }
+.dark .fab:hover { filter: brightness(1.08); }
+
+
 /* ===== REPORT FORM POPUP ===== */
 #reportForm {
   position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
