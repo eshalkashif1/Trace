@@ -7,7 +7,7 @@ Trace was designed to help community safety through data visibility, especially 
 ## Live Website
 Access it here: https://trace-6vjy.onrender.com/
 
-# To Run Locally
+## To Run Locally
 Make sure you have the following installed:
 Node.js (v18 or newer)
 npm (comes with Node)
