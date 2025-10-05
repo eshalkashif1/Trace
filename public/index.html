@@ -10,21 +10,29 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>🧭 Trace: Harassment Reporting Map</h1>
-  <p>Click anywhere on the map to add a report. Your report will appear for everyone using the site.</p>
+  <header>
+    <nav class="navbar">
+      <div class="logo-container">
+        <img src="trace-logo.png" alt="Trace logo" class="logo">
+      </div>
+      <ul class="nav-links">
+        <li><a href="home.html">Home</a></li>
+        <li><a href="index.html">Map</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="resources.html">Resources</a></li>
+      </ul>
+    </nav>
+  </header>
 
-  <!-- Map container -->
+  <p>Click anywhere on the map to add a report. Your report will appear for everyone using the site.</p>
   <div id="map"></div>
 
-  <!-- Report form -->
   <div id="reportForm" class="hidden">
     <h3>Add Report</h3>
     <label>Date/Time:</label>
     <input type="datetime-local" id="incidentTime" /><br>
-
     <label>Description:</label>
-    <textarea id="incidentDesc" rows="3" placeholder="Describe what happened (optional)"></textarea><br>
-
+    <textarea id="incidentDesc" rows="3"></textarea><br>
     <button id="saveBtn">Save</button>
     <button id="cancelBtn">Cancel</button>
 
@@ -47,8 +55,8 @@
     </div>
   </div>
 
-  <!-- Leaflet & Script -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="script.js"></script>
 </body>
+
 </html>
