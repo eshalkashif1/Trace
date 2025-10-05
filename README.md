@@ -62,5 +62,15 @@ http://localhost:3000
 - **Database:** SQLite
 - **Hosting:** Render
 
-## 📸 Screenshot
-<img width="1898" height="809" alt="image" src="https://github.com/user-attachments/assets/00ac74ef-5209-4f82-8ddf-008270d53841" />
+## 📸 Screenshots
+
+<img width="1440" height="801" alt="Screenshot 2025-10-05 at 2 34 02 PM" src="https://github.com/user-attachments/assets/64b113ad-75c6-4cf5-a5f2-740d69d252a4" />
+
+``` [Click R2 Tab] -> Open in Google Maps ```
+<br>
+<img width="1440" height="807" alt="Screenshot 2025-10-05 at 2 34 49 PM" src="https://github.com/user-attachments/assets/e6ac5122-f669-43d2-b413-0104766ec4c1" />
+
+<br>
+
+``` [Clicking 'Report using location'] ```
+<img width="1440" height="807" alt="Screenshot 2025-10-05 at 2 36 57 PM" src="https://github.com/user-attachments/assets/67a1bc83-87d8-4466-b157-2fee19f32494" />
