@@ -21,19 +21,61 @@ const MOCK_RISK_ZONES = [
 ];
 
 // --- Hotspot clustering/visuals ---
-const HOTSPOT_CLUSTER_RADIUS_M = 180;     // points closer than this (to the evolving centroid) are clustered
-const HOTSPOT_MIN_COUNT        = 3;       // show circles only for clusters >= this many reports
-const HOTSPOT_BASE_VIS_RADIUS_M = 80;     // base visual circle size (meters)
-const HOTSPOT_RADIUS_PER_REPORT_M = 40;   // extra visual size per report above threshold
-const HOTSPOT_MAX_VIS_RADIUS_M = 400;     // clamp so it doesn't cover half the city
+const HOTSPOT_CLUSTER_RADIUS_M = 180;
+const HOTSPOT_MIN_COUNT        = 3;
+const HOTSPOT_BASE_VIS_RADIUS_M = 80;
+const HOTSPOT_RADIUS_PER_REPORT_M = 40;
+const HOTSPOT_MAX_VIS_RADIUS_M = 400;
+
+// ================= THEME TOGGLE + TILE SWITCHING =================
+let lightTiles, darkTiles;
+
+(function themeInit() {
+  const root = document.documentElement;
+  const btn = document.getElementById('themeToggle');
+  const saved = localStorage.getItem('theme');
+
+  // Default LIGHT unless saved dark
+  if (saved === 'dark') root.classList.add('dark');
+  else root.classList.remove('dark');
+
+  const icon = () => (root.classList.contains('dark') ? '☀️' : '🌙');
+  if (btn) btn.textContent = icon();
+
+  btn && btn.addEventListener('click', () => {
+    root.classList.toggle('dark');
+    localStorage.setItem('theme', root.classList.contains('dark') ? 'dark' : 'light');
+    btn.textContent = icon();
+    if (typeof swapTilesForTheme === 'function') swapTilesForTheme();
+  });
+})();
 
 // ================= MAP SETUP =================
 const map = L.map('map', { maxBounds: OTTAWA_BOUNDS, maxBoundsViscosity: 0.8 })
   .setView([45.4215, -75.6993], 12); // Ottawa
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+// Light: CARTO Positron (clean light gray)
+lightTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; OpenStreetMap contributors'
-}).addTo(map);
+})
+
+// Dark: Stadia Alidade Smooth Dark (dark with colored features/roads)
+darkTiles = L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; OpenStreetMap & Stadia Maps'
+});
+
+// Add initial tiles by theme
+(document.documentElement.classList.contains('dark') ? darkTiles : lightTiles).addTo(map);
+
+// Swap tiles on theme change
+function swapTilesForTheme() {
+  const wantDark = document.documentElement.classList.contains('dark');
+  if (wantDark && map.hasLayer(lightTiles)) {
+    map.removeLayer(lightTiles); darkTiles.addTo(map);
+  } else if (!wantDark && map.hasLayer(darkTiles)) {
+    map.removeLayer(darkTiles); lightTiles.addTo(map);
+  }
+}
 
 // ================= DOM =================
 const form = document.getElementById('reportForm');
@@ -84,7 +126,6 @@ for (const z of MOCK_RISK_ZONES) {
 // ================= UTIL: Distance & Sampling =================
 function toRad(x){ return x*Math.PI/180; }
 function haversineMeters(a, b){
-  // a,b = [lat, lon]
   const R=6371000;
   const dLat=toRad(b[0]-a[0]), dLon=toRad(b[1]-a[1]);
   const la1=toRad(a[0]), la2=toRad(b[0]);
@@ -92,7 +133,6 @@ function haversineMeters(a, b){
   return 2*R*Math.asin(Math.sqrt(s));
 }
 function pointToSegMeters(p,a,b){
-  // a,b = [lat,lon], p=[lat,lon], quick equirectangular projection local to 'a'
   const R = 6371000, lat = toRad((a[0]+b[0])/2);
   const ax=toRad(a[1])*Math.cos(lat)*R, ay=toRad(a[0])*R;
   const bx=toRad(b[1])*Math.cos(lat)*R, by=toRad(b[0])*R;
@@ -103,7 +143,6 @@ function pointToSegMeters(p,a,b){
   return Math.hypot(px-cx, py-cy);
 }
 function sampleLine(coords, spacingM=SAMPLE_SPACING_M){
-  // coords: [ [lng,lat], ... ]
   if (coords.length<2) return coords;
   const out=[coords[0]];
   let acc=0;
@@ -126,12 +165,9 @@ function sampleLine(coords, spacingM=SAMPLE_SPACING_M){
 }
 
 // ================= HOTSPOTS =================
-// Simple centroid-based agglomerative clustering
 function clusterReports(points, radiusM) {
-  // points: [{lat, lon}]
   const remaining = points.slice();
   const clusters = [];
-
   while (remaining.length) {
     const seed = remaining.pop();
     let members = [seed];
@@ -140,11 +176,9 @@ function clusterReports(points, radiusM) {
 
     while (changed) {
       changed = false;
-      // centroid
       cLat = members.reduce((s,p)=>s+p.lat,0)/members.length;
       cLon = members.reduce((s,p)=>s+p.lon,0)/members.length;
 
-      // absorb any remaining points within radius of current centroid
       for (let i = remaining.length - 1; i >= 0; i--) {
         const p = remaining[i];
         const d = haversineMeters([p.lat, p.lon], [cLat, cLon]);
@@ -178,7 +212,7 @@ function drawHotspots() {
     );
     const fill = Math.min(0.55, 0.18 + extra * 0.06);
 
-    const circle = L.circle([c.lat, c.lon], {
+    L.circle([c.lat, c.lon], {
       radius: visRadius,
       color: '#e03131',
       weight: 2,
@@ -188,7 +222,6 @@ function drawHotspots() {
     .bindTooltip(`Hotspot: ${c.count} reports`, { direction: 'top' })
     .addTo(hotspotsLayer);
 
-    // Optional: a small center dot
     L.circleMarker([c.lat, c.lon], {
       radius: 3, color: '#e03131', weight: 2, fillOpacity: 0.9
     }).addTo(hotspotsLayer);
@@ -200,9 +233,9 @@ async function loadReports() {
   try {
     const res = await fetch(API_URL);
     const data = await res.json();
-    reports = data; // store for risk scoring
+    reports = data;
     data.forEach(r => addReportMarker(r));
-    drawHotspots(); // <-- draw circles after loading
+    drawHotspots();
   } catch (err) {
     console.error("Error loading reports:", err);
   }
@@ -221,10 +254,8 @@ function addReportMarker(r) {
 // ================= REPORT FORM =================
 map.on('click', async (e) => {
   clickedCoords = e.latlng;
-  // Map click: if routing focused, populate destination; else open report form
   const activeEl = document.activeElement;
   if (activeEl === toInput || activeEl === fromInput) {
-    // place marker and reverse geocode
     if (activeEl === toInput) {
       setToPoint([clickedCoords.lat, clickedCoords.lng], true);
     } else {
@@ -253,7 +284,7 @@ saveBtn.addEventListener('click', async () => {
 
     addReportMarker({ ...report, occurred_at: new Date().toISOString() });
     reports.push(report);
-    drawHotspots(); // <-- update hotspots live
+    drawHotspots();
     resetForm();
   } catch (err) {
     console.error("Error saving report:", err);
@@ -268,7 +299,7 @@ function resetForm() {
   clickedCoords = null;
 }
 
-// "Use current location" inside report form (jittered privacy)
+// "Use current location" in report form (privacy jitter)
 function fuzzCoord(lat, lng, meters = 120) {
   const r = meters / 111320;
   const u = Math.random(), v = Math.random();
@@ -314,9 +345,7 @@ async function geocode(q) {
   return { lat: +lat, lon: +lon, label: display_name };
 }
 async function reverseGeocode(lat, lon) {
-  const params = new URLSearchParams({
-    lat, lon, format: "json", zoom: 17
-  });
+  const params = new URLSearchParams({ lat, lon, format: "json", zoom: 17 });
   const res = await fetch(`${REVERSE}?${params.toString()}`, { headers: { "Accept": "application/json" } });
   const data = await res.json();
   return data?.display_name || `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
@@ -369,7 +398,6 @@ function startLive() {
         liveMarker.setLatLng([lat, lon]);
         liveAccCircle.setLatLng([lat, lon]).setRadius(Math.max(accuracy, 15));
       }
-      // If destination set, update route (throttled)
       recalcRouteDebounced();
     },
     (err) => {
@@ -419,7 +447,7 @@ swapBtn.addEventListener('click', async () => {
 let recalcTimer = null;
 function recalcRouteDebounced() {
   const now = Date.now();
-  if (now - lastRecalcTs < 1500) { // throttle ~1.5s
+  if (now - lastRecalcTs < 1500) {
     clearTimeout(recalcTimer);
     recalcTimer = setTimeout(doRoute, 1500);
   } else {
@@ -429,15 +457,12 @@ function recalcRouteDebounced() {
 }
 
 async function resolvePointFromInput(inputEl, markerEl) {
-  // If live origin requested
   if (inputEl === fromInput && liveMarker && (inputEl.value.trim()==='' || inputEl.value.toLowerCase().includes('live'))) {
     const { lat, lng } = liveMarker.getLatLng();
     await setFromPoint([lat, lng], true);
     return [lat, lng];
   }
-  if (markerEl) {
-    return [markerEl.getLatLng().lat, markerEl.getLatLng().lng];
-  }
+  if (markerEl) return [markerEl.getLatLng().lat, markerEl.getLatLng().lng];
   const q = inputEl.value.trim();
   if (!q) throw new Error("Missing address");
   const g = await geocode(q);
@@ -447,19 +472,16 @@ async function resolvePointFromInput(inputEl, markerEl) {
 }
 
 async function doRoute() {
-  // Need destination at minimum
   if (!toInput.value && !toMarker) return;
 
   let fromLatLng, toLatLng;
   try {
     fromLatLng = await resolvePointFromInput(fromInput, fromMarker);
   } catch(e) {
-    // fallback: live marker if available
     if (liveMarker) {
       const ll = liveMarker.getLatLng(); fromLatLng = [ll.lat, ll.lng];
       if (!fromMarker) await setFromPoint(fromLatLng, false);
     } else {
-      // Set from to Carleton if nothing present
       fromLatLng = CARLETON_CENTRE;
       await setFromPoint(fromLatLng, false);
     }
@@ -467,7 +489,6 @@ async function doRoute() {
   try {
     toLatLng = await resolvePointFromInput(toInput, toMarker);
   } catch(e) {
-    // Try geocode on the fly
     if (!toInput.value) return;
     const g = await geocode(toInput.value.trim());
     toLatLng = [g.lat, g.lon];
@@ -487,28 +508,25 @@ async function doRoute() {
   }
   if (!json || !json.routes || !json.routes.length) return;
 
-  // Score routes by risk
   const avoidRisk = avoidRiskChk.checked;
   const scored = json.routes.map(r => {
-    const coords = r.geometry.coordinates; // [lng,lat]
+    const coords = r.geometry.coordinates;
     const samples = sampleLine(coords);
     let risk = 0;
     if (avoidRisk) {
-      // report proximity
       for (const s of samples) {
         const p = [s[1], s[0]];
         for (const rep of reports) {
           const d = haversineMeters(p, [rep.lat, rep.lon]);
           if (d <= REPORT_PENALTY_RADIUS_M) risk += 1 / Math.max(1, (d/10)**2);
         }
-        // mock zones
         for (const z of MOCK_RISK_ZONES) {
           const dz = haversineMeters(p, [z.lat, z.lon]);
           if (dz <= z.radius) risk += z.weight * (1 - (dz/z.radius));
         }
       }
     }
-    const time = r.duration; // seconds
+    const time = r.duration;
     const score = ALPHA_TIME * time + (avoidRisk ? BETA_RISK * risk : 0);
     return { route: r, risk, time, score };
   }).sort((a,b) => a.score - b.score);
@@ -518,17 +536,14 @@ async function doRoute() {
 }
 
 function drawRoutes(scored) {
-  // Clear previous
   if (routeLayer) { map.removeLayer(routeLayer); routeLayer = null; }
   altLayers.forEach(l => map.removeLayer(l)); altLayers = [];
 
-  // Best route
   const best = scored[0].route;
   routeLayer = L.geoJSON(best.geometry, {
     style: { color: '#0077b6', weight: 6, opacity: 0.9 }
   }).addTo(map);
 
-  // Alts
   for (let i=1;i<Math.min(3, scored.length);i++){
     const lay = L.geoJSON(scored[i].route.geometry, {
       style: { color: '#ffa94d', weight: 4, opacity: 0.7, dashArray: "6 8" }
@@ -536,7 +551,6 @@ function drawRoutes(scored) {
     altLayers.push(lay);
   }
 
-  // Fit map nicely (but don’t jump if user is zoomed in)
   const bb = routeLayer.getBounds();
   if (!map.getBounds().contains(bb)) map.fitBounds(bb, { padding: [30,30] });
 }
@@ -560,6 +574,3 @@ loadReports();
 // Prefill “To” with Carleton for demo
 toInput.value = "Carleton University, Ottawa";
 setToPoint(CARLETON_CENTRE, false);
-
-// Optional console helper
-// window.__trace = { doRoute, setFromPoint, setToPoint };
