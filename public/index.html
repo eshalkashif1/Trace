@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Trace – Harassment Reporting Map</title>
 
-  <!-- Leaflet styles -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <!-- NAVBAR (existing) -->
   <header>
     <nav class="navbar">
       <div class="logo-container">
@@ -17,28 +17,92 @@
       </div>
       <ul class="nav-links">
         <li><a href="home.html">Home</a></li>
-        <li><a href="index.html">Map</a></li>
+        <li><a class="active" href="index.html">Map</a></li>
         <li><a href="about.html">About</a></li>
         <li><a href="resources.html">Resources</a></li>
       </ul>
     </nav>
+
+    <!-- ROUTE BAR (new) -->
+    <div id="topbar">
+      <form id="routeForm" onsubmit="return false;">
+        <div class="row">
+          <div class="field">
+            <label for="fromInput">From</label>
+            <div class="field-inline">
+              <input id="fromInput" placeholder="Use live location or pick on map" />
+              <button type="button" id="useLiveBtn" title="Use live GPS">📍</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="toInput">To</label>
+            <div class="field-inline">
+              <input id="toInput" placeholder="e.g., Carleton University, Ottawa" />
+              <button type="button" id="swapBtn" title="Swap">⇄</button>
+            </div>
+          </div>
+
+          <div class="field small">
+            <label for="mode">Mode</label>
+            <select id="mode">
+              <option value="foot">Walk</option>
+              <option value="driving">Drive</option>
+            </select>
+          </div>
+
+          <div class="field small checkbox">
+            <label><input type="checkbox" id="avoidRisk" checked /> Avoid high-risk</label>
+          </div>
+
+          <div class="actions">
+            <button id="routeBtn" class="primary">Find Safer Route</button>
+            <button id="openGmapsBtn" type="button" class="secondary">Open in Google Maps</button>
+          </div>
+        </div>
+
+        <div id="routeStatus" aria-live="polite"></div>
+      </form>
+    </div>
   </header>
 
-  <p>Click anywhere on the map to add a report. Your report will appear for everyone using the site.</p>
-  <div id="map"></div>
+  <!-- MAIN LAYOUT: directions + map -->
+  <div id="main">
+    <aside id="directions">
+      <h3>Directions</h3>
+      <ol id="steps"></ol>
+    </aside>
 
+    <section id="mapWrap">
+      <div id="map"></div>
+    </section>
+  </div>
+
+  <!-- Report form -->
   <div id="reportForm" class="hidden">
     <h3>Add Report</h3>
     <label>Date/Time:</label>
     <input type="datetime-local" id="incidentTime" /><br>
     <label>Description:</label>
-    <textarea id="incidentDesc" rows="3"></textarea><br>
+    <textarea id="incidentDesc" rows="3" placeholder="Describe what happened (optional)"></textarea><br>
     <button id="saveBtn">Save</button>
-    <button id="cancelBtn">Cancel</button>
+    <button id="cancelBtn" class="secondary">Cancel</button>
+    <button id="useLocationBtn" type="button">Use current location</button>
+    <small id="locStatus" style="margin-left:8px;"></small>
+  </div>
+
+  <!-- Live location consent modal (anonymous, local only) -->
+  <div id="locOverlay" class="overlay hidden"></div>
+  <div id="locConsent" class="modal hidden" role="dialog" aria-labelledby="locTitle" aria-modal="true">
+    <h3 id="locTitle">Allow anonymous live location?</h3>
+    <p>Your location is used only on this device to show a moving dot and update routes. It is <b>not</b> uploaded.</p>
+    <div class="modal-actions">
+      <button id="allowLocBtn">Allow</button>
+      <button id="denyLocBtn" class="secondary">Not now</button>
+    </div>
   </div>
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="script.js"></script>
 </body>
-
 </html>
