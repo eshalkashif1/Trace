@@ -4,8 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>About | Trace</title>
-
-  <!-- Early theme boot (same as index.html) -->
   <script>
     (function () {
       try {
@@ -17,11 +15,10 @@
       } catch (_) {}
     })();
   </script>
-
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- NAVBAR (identical to index.html) -->
+  <!-- NAVBAR -->
   <header>
     <nav class="navbar">
       <div class="logo-container">
@@ -29,11 +26,13 @@
       </div>
       <ul class="nav-links">
         <li><a href="index.html">Map</a></li>
-        <li><a href="about.html">About</a></li>
+        <li><a class="active" href="about.html">About</a></li>
         <li><a href="resources.html">Resources</a></li>
       </ul>
+      <!-- Theme toggle -->
       <button id="themeToggle" aria-label="Toggle dark mode" title="Toggle theme">🌙</button>
     </nav>
+
   </header>
 
   <main style="max-width: 900px; margin: 24px auto; padding: 0 16px;">
@@ -41,31 +40,6 @@
     <p>Trace is a community-driven platform that empowers individuals to report and visualize harassment hotspots, making our cities safer for everyone.</p>
   </main>
 
-  <!-- Theme toggle logic (safe on pages without a map) -->
-  <script>
-    (function themeInit() {
-      const root = document.documentElement;
-      const btn = document.getElementById('themeToggle');
-      const saved = localStorage.getItem('theme');
-      if (saved === 'dark') root.classList.add('dark'); else root.classList.remove('dark');
-      const icon = () => (root.classList.contains('dark') ? '☀️' : '🌙');
-      if (btn) btn.textContent = icon();
-      btn && btn.addEventListener('click', () => {
-        root.classList.toggle('dark');
-        localStorage.setItem('theme', root.classList.contains('dark') ? 'dark' : 'light');
-        btn.textContent = icon();
-        // no-op on pages without map; guarded call if present
-        if (typeof swapTilesForTheme === 'function') swapTilesForTheme();
-      });
-    })();
-
-    // Mark the current menu item active automatically
-    (function setActive() {
-      const here = location.pathname.split('/').pop() || 'index.html';
-      document.querySelectorAll('.nav-links a').forEach(a => {
-        a.classList.toggle('active', a.getAttribute('href') === here);
-      });
-    })();
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
