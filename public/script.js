@@ -101,7 +101,6 @@ const timeInput   = document.getElementById("incidentTime");
 
 const fromInput   = document.getElementById("fromInput");
 const toInput     = document.getElementById("toInput");
-const modeSelect  = document.getElementById("mode");
 const avoidRiskChk= document.getElementById("avoidRisk");
 const routeBtn    = document.getElementById("routeBtn");
 const useLiveBtn  = document.getElementById("useLiveBtn");
@@ -578,7 +577,7 @@ async function doRoute() {
   try { toLatLng = await resolvePointFromInput(toInput, toMarker); }
   catch(e){ setStatus("Couldn’t resolve destination.", "error"); return; }
 
-  const profile = (modeSelect.value === "foot") ? "walking" : "driving";
+  const profile = 'walking';
   const coordStr = `${fromLatLng[1]},${fromLatLng[0]};${toLatLng[1]},${toLatLng[0]}`;
   const url = `${OSRM_BASE}/route/v1/${profile}/${coordStr}?alternatives=true&steps=true&overview=full&geometries=geojson`;
 
