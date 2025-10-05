@@ -7,7 +7,7 @@ Trace was designed to help community safety through data visibility, especially 
 ## Live Website
 Access it here: https://trace-6vjy.onrender.com/
 
-### You can:
+### 🌟 Features
 - View reported harassment locations on the map
 - Click anywhere to submit a new report
 - See real-time community data across different areas
