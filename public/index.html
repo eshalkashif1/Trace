@@ -1,15 +1,28 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Trace – Harassment Reporting Map</title>
 
+  <!-- Prevent theme flash: default LIGHT unless user saved dark -->
+  <script>
+    (function () {
+      try {
+        if (localStorage.getItem('theme') === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      } catch (_) {}
+    })();
+  </script>
+
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- NAVBAR (existing) -->
+  <!-- NAVBAR -->
   <header>
     <nav class="navbar">
       <div class="logo-container">
@@ -21,9 +34,11 @@
         <li><a href="about.html">About</a></li>
         <li><a href="resources.html">Resources</a></li>
       </ul>
+      <!-- Theme toggle -->
+      <button id="themeToggle" aria-label="Toggle dark mode" title="Toggle theme">🌙</button>
     </nav>
 
-    <!-- ROUTE BAR (new) -->
+    <!-- ROUTE BAR -->
     <div id="topbar">
       <form id="routeForm" onsubmit="return false;">
         <div class="row">
