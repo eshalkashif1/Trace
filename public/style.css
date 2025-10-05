@@ -102,7 +102,8 @@ body {
 }
 #routeForm .row {
   display: grid;
-  grid-template-columns: 1.2fr 1.2fr 0.6fr 0.8fr auto; /* fits single button now */
+  /* From | To | Avoid high-risk | Button */
+  grid-template-columns: 1.2fr 1.2fr auto auto;
   gap: 10px; align-items: end; max-width: 1200px; margin: 0 auto;
 }
 #routeForm .field { display: grid; gap: 4px; }
