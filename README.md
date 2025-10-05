@@ -9,12 +9,12 @@ Access it here: https://trace-6vjy.onrender.com/
 
 ## To Run Locally
 Make sure you have the following installed:
-Node.js (v18 or newer)
-npm (comes with Node)
+**Node.js** (v18 or newer)
+**npm** (comes with Node)
 
 1. Clone this repository:
 ```bash
-git clone git clone https://github.com/eshalkashif1/Trace.git
+git clone https://github.com/eshalkashif1/Trace.git
 ```
 2. Navigate to the project directory:
 ```bash
