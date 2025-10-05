@@ -15,7 +15,11 @@ const descInput = document.getElementById('incidentDesc');
 const timeInput = document.getElementById('incidentTime');
 const useLocBtn = document.getElementById('useLocationBtn');
 const locStatus = document.getElementById('locStatus');
-let currentLocMarker = null; // to show where we set the location
+//let currentLocMarker = null; // to show where we set the location
+
+const quickBtn = document.getElementById('quickReportBtn');
+let currentLocMarker = null; // just for user feedback
+
 
 
 let clickedCoords = null;
@@ -232,6 +236,61 @@ if (allowLocBtn && denyLocBtn) {
     hideLocModal();
   });
 }
+
+quickBtn.addEventListener('click', () => {
+  if (!navigator.geolocation) {
+    alert('Geolocation not supported by this browser.');
+    return;
+  }
+
+  quickBtn.disabled = true;
+  const originalLabel = quickBtn.textContent;
+  quickBtn.textContent = 'Locating…';
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const { latitude, longitude, accuracy } = pos.coords;
+
+      // optional privacy: jitter ~100–150m
+      const { lat, lng } = fuzzCoord(latitude, longitude, 120);
+
+      // reuse the same state your map click uses
+      clickedCoords = L.latLng(lat, lng);
+
+      // visual feedback: drop/replace a marker
+      if (currentLocMarker) currentLocMarker.remove();
+      currentLocMarker = L.circleMarker([lat, lng], {
+        radius: 8, color: '#0a0', weight: 2, fillOpacity: 0.6
+      }).addTo(map).bindPopup(`Using your location (±${Math.round(accuracy)}m)`).openPopup();
+
+      // center & open the form
+      map.setView([lat, lng], 15);
+      form.classList.remove('hidden');
+
+      // optional: stamp "now" so your popup date shows for immediate addMarker
+      if (timeInput) {
+        // if type="datetime-local", you could prefill it here
+        // const now = new Date();
+        // timeInput.value = new Date(now - now.getTimezoneOffset()*60000).toISOString().slice(0,16);
+      }
+
+      quickBtn.textContent = originalLabel;
+      quickBtn.disabled = false;
+      // optionally focus the description field:
+      descInput?.focus();
+    },
+    (err) => {
+      const msg = err.code === 1 ? 'Permission denied'
+                : err.code === 2 ? 'Position unavailable'
+                : err.code === 3 ? 'Timeout' : 'Error';
+      alert(`Couldn’t get your location: ${msg}. You can still click the map to place a report.`);
+      quickBtn.textContent = originalLabel;
+      quickBtn.disabled = false;
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+  );
+});
+
 
 // Ask once per device unless user decided already
 (function bootLiveLoc() {
