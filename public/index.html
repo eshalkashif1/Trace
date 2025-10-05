@@ -28,7 +28,6 @@
         <img src="trace-logo.png" alt="Trace logo" class="logo">
       </div>
       <ul class="nav-links">
-        <li><a href="home.html">Home</a></li>
         <li><a class="active" href="index.html">Map</a></li>
         <li><a href="about.html">About</a></li>
         <li><a href="resources.html">Resources</a></li>
@@ -92,18 +91,27 @@
     </section>
   </div>
 
-  <!-- Report form -->
-  <div id="reportForm" class="hidden">
-    <h3>Add Report</h3>
-    <label>Date/Time:</label>
-    <input type="datetime-local" id="incidentTime" /><br>
-    <label>Description:</label>
-    <textarea id="incidentDesc" rows="3" placeholder="Describe what happened (optional)"></textarea><br>
-    <button id="saveBtn">Save</button>
-    <button id="cancelBtn" class="secondary">Cancel</button>
-    <button id="useLocationBtn" type="button">Use current location</button>
-    <small id="locStatus" style="margin-left:8px;"></small>
+  <!-- Report modal -->
+<div id="reportForm" class="report-card hidden" role="dialog" aria-modal="true" aria-labelledby="reportTitle">
+  <div class="report-head">
+    <h3 id="reportTitle">Add Report</h3>
+    <button id="reportClose" class="icon-btn" aria-label="Close report form">✕</button>
   </div>
+
+  <div class="report-body">
+    <label for="incidentTime">Date &amp; time</label>
+    <input id="incidentTime" type="datetime-local" />
+
+    <label for="incidentDesc">Description</label>
+    <textarea id="incidentDesc" rows="4" maxlength="600"
+      placeholder="What happened? Any context that helps — people around, lighting, direction of travel, etc."></textarea>
+  </div>
+
+  <div class="report-foot">
+    <button id="saveBtn" class="btn-primary">Save report</button>
+  </div>
+</div>
+
 
   <!-- Live location consent modal -->
   <div id="locOverlay" class="overlay hidden"></div>
@@ -117,7 +125,7 @@
   </div>
 
   <!-- ✅ Floating “quick report” button -->
-  <button id="quickReportBtn" class="fab" title="Create report at my location">📍 Report here</button>
+  <button id="quickReportBtn" class="fab" title="Create report at my location">📍 Report using location</button>
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="script.js"></script>

@@ -38,6 +38,57 @@ const ROUTE_COLORS = [
   "#00bcd4"  // R6 (dashed teal)
 ];
 
+// ================= THEME TOGGLE + TILE SWITCHING =================
+let lightTiles, darkTiles;
+
+(function themeInit() {
+  const root = document.documentElement;
+  const btn = document.getElementById('themeToggle');
+  const saved = localStorage.getItem('theme');
+
+  // Default LIGHT unless saved dark
+  if (saved === 'dark') root.classList.add('dark');
+  else root.classList.remove('dark');
+
+  const icon = () => (root.classList.contains('dark') ? '☀️' : '🌙');
+  if (btn) btn.textContent = icon();
+
+  btn && btn.addEventListener('click', () => {
+    root.classList.toggle('dark');
+    localStorage.setItem('theme', root.classList.contains('dark') ? 'dark' : 'light');
+    btn.textContent = icon();
+    if (typeof swapTilesForTheme === 'function') swapTilesForTheme();
+  });
+})();
+
+// ================= MAP SETUP =================
+const map = L.map('map', { maxBounds: OTTAWA_BOUNDS, maxBoundsViscosity: 0.8 })
+  .setView([45.4215, -75.6993], 12); // Ottawa
+
+// Light: CARTO Positron (clean light gray)
+lightTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap contributors'
+})
+
+// Dark: Stadia Alidade Smooth Dark (dark with colored features/roads)
+darkTiles = L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; OpenStreetMap & Stadia Maps'
+});
+
+// Add initial tiles by theme
+(document.documentElement.classList.contains('dark') ? darkTiles : lightTiles).addTo(map);
+
+// Swap tiles on theme change
+function swapTilesForTheme() {
+  const wantDark = document.documentElement.classList.contains('dark');
+  if (wantDark && map.hasLayer(lightTiles)) {
+    map.removeLayer(lightTiles); darkTiles.addTo(map);
+  } else if (!wantDark && map.hasLayer(darkTiles)) {
+    map.removeLayer(darkTiles); lightTiles.addTo(map);
+  }
+}
+
+
 // ------- Mock Ottawa “news API” incidents (severity 1–4) -------
 const NEWS_INCIDENTS = [
   { lat:45.4246, lon:-75.6950, severity:3, title:"Assault reported near ByWard" },
@@ -104,12 +155,17 @@ function softPenalty(distanceM, radiusM){
   return x * x; // quadratic falloff
 }
 
+function nowLocalISO() {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0,16); // yyyy-mm-ddThh:mm
+}
+
+
 // ================= MAP & PANES =================
-const map = L.map('map', { maxBounds: OTTAWA_BOUNDS, maxBoundsViscosity: 0.8 })
-  .setView([45.4215, -75.6993], 12);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; OpenStreetMap contributors'
-}).addTo(map);
+//const map = L.map('map', { maxBounds: OTTAWA_BOUNDS, maxBoundsViscosity: 0.8 })
+  //.setView([45.4215, -75.6993], 12);
+
 
 map.createPane('riskPane');     map.getPane('riskPane').style.zIndex = 300;
 map.createPane('hotspotsPane'); map.getPane('hotspotsPane').style.zIndex = 350;
@@ -128,12 +184,11 @@ NEWS_INCIDENTS.forEach(n => {
 
 // ================= DOM =================
 const form          = document.getElementById('reportForm');
-const saveBtn       = document.getElementById('saveBtn');
-const cancelBtn     = document.getElementById('cancelBtn');
-const descInput     = document.getElementById('incidentDesc');
-const timeInput     = document.getElementById('incidentTime');
-const useLocBtn     = document.getElementById('useLocationBtn');
-const locStatus     = document.getElementById('locStatus');
+const saveBtn  = document.getElementById('saveBtn');
+const closeBtn = document.getElementById('reportClose');
+const descInput = document.getElementById('incidentDesc');
+const timeInput = document.getElementById('incidentTime');
+
 
 const fromInput     = document.getElementById('fromInput');
 const toInput       = document.getElementById('toInput');
@@ -273,6 +328,7 @@ map.on('click', async (e) => {
     recalcRouteDebounced(false);
   } else {
     form.classList.remove('hidden');
+    if (timeInput) timeInput.value = nowLocalISO();
   }
 });
 
@@ -280,10 +336,10 @@ map.on('click', async (e) => {
 saveBtn.addEventListener('click', async () => {
   if (!clickedCoords) return;
   const payload = {
-    lat: clickedCoords.lat,
-    lon: clickedCoords.lng,
-    description: descInput.value || "No description",
-    occurred_at: new Date().toISOString()
+  lat: clickedCoords.lat,
+  lon: clickedCoords.lng,
+  description: descInput.value || "No description",
+  occurred_at: timeInput?.value ? new Date(timeInput.value).toISOString() : new Date().toISOString()
   };
   try {
     await fetch(API_URL, {
@@ -302,7 +358,7 @@ saveBtn.addEventListener('click', async () => {
 });
 
 // --- CANCEL FORM ---
-cancelBtn.addEventListener('click', resetForm);
+closeBtn?.addEventListener('click', resetForm);
 
 function resetForm() {
   form?.classList?.add('hidden');
@@ -321,24 +377,6 @@ function fuzzCoord(lat, lng, meters = 120) {
   const lngOff = w * Math.sin(t) / Math.cos(lat * Math.PI / 180);
   return { lat: lat + latOff, lng: lng + lngOff };
 }
-useLocBtn?.addEventListener('click', () => {
-  if (!navigator.geolocation) { locStatus.textContent = 'Geolocation not supported.'; return; }
-  locStatus.textContent = 'Locating…';
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      const { latitude, longitude, accuracy } = pos.coords;
-      const { lat, lng } = fuzzCoord(latitude, longitude, 120);
-      clickedCoords = L.latLng(lat, lng);
-      L.circleMarker([lat, lng], { radius: 8, color: '#0a0', weight: 2, fillOpacity: 0.6 })
-        .addTo(map).bindPopup(`Your location (±${Math.round(accuracy)}m)`).openPopup();
-      map.setView([lat, lng], 15);
-      form.classList.remove('hidden');
-      locStatus.textContent = 'Location set.';
-    },
-    () => { locStatus.textContent = 'Could not get location.'; },
-    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-  );
-});
 
 // ================= GEOCODING =================
 async function geocode(q) {
@@ -476,6 +514,7 @@ function handleQuickReport(lat, lng, accuracy = 100) {
   // focus map + show form
   map.setView([jLat, jLng], 15);
   form.classList.remove('hidden');
+  if (timeInput) timeInput.value = nowLocalISO();
   descInput && descInput.focus();
 }
 
@@ -527,12 +566,6 @@ document.addEventListener('click', async (ev) => {
     }
   }
 });
-
-
-
-
-
-
 
 // ================= ROUTING (OSRM + scoring) =================
 
@@ -792,12 +825,7 @@ function highlightActiveTab(idx){
   });
 }
 
-// ================= INIT =================
-document.getElementById('themeToggle')?.addEventListener('click', () => {
-  const root = document.documentElement;
-  const dark = root.classList.toggle('dark');
-  try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch (_){}
-});
+
 
 loadReports();
 toInput.value = "Carleton University, Ottawa";
