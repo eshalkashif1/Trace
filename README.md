@@ -31,7 +31,7 @@ node server.js
 5. Go to:
 http://localhost:3000
 
-### 🌟 Features
+## 🌟 Features
 #### Reporting
 - **Two ways to report:** click anywhere on the map _or_ use the floating **Quick Report** button (uses your current location).
 - **Modern report modal:** accessible dialog with an “✕” close button, **date/time prefilled to now (editable)**, description with subtle accent styling
