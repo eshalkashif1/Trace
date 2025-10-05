@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Orbitron:wght@600;700&display=swap');
+
 :root{
   /* light */
   --bg: #fafafa;
@@ -63,7 +65,7 @@ body {
   justify-content: space-between;
   align-items: center;
   background: linear-gradient(90deg, rgba(255,255,255,0.95), rgba(245,245,245,0.92));
-  padding: 10px 16px;
+  padding: 5px 16px;
   border-bottom: 1px solid rgba(0,0,0,0.1);
   box-shadow: 0 2px 6px rgba(0,0,0,0.06);
   backdrop-filter: blur(8px);
@@ -80,6 +82,16 @@ body {
 .nav-links a:hover, .nav-links a.active { color: #008080; }
 #themeToggle { background: transparent; border: none; font-size: 18px; cursor: pointer; padding: 6px 8px; border-radius: 8px; }
 #themeToggle:hover { background: rgba(0,0,0,0.06); }
+
+.logo-container h1 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 25px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #3a1f75;
+  font-weight: 700;
+  margin: 0;
+}
 
 /* ===== ROUTE BAR ===== */
 #topbar {
@@ -278,6 +290,83 @@ body {
   #directions { height: 36vh; }
   #mapWrap { height: 64vh; position: relative; }
 }
+
+/* ===== ABOUT PAGE: Glassy Violet Card ===== */
+.about-page {
+  max-width: 1100px;
+  margin: 28px auto;
+  padding: 0 16px;
+  font-weight:100;
+}
+
+.about-card {
+  /* Layout */
+  margin: 0 auto;
+  max-width: 1200px;
+  padding: 22px 22px;
+  border-radius: 16px;
+    height: 500px;
+
+  /* Frosted glass look */
+  background:
+    linear-gradient(
+      135deg,
+      rgba(215, 198, 255, 0.14),   /* violet tint */
+      rgba(255, 255, 255, 0.70)   /* milky glass */
+    );
+  backdrop-filter: blur(14px) saturate(120%);
+  -webkit-backdrop-filter: blur(14px) saturate(120%);
+
+  /* Subtle violet border + soft shadow */
+  border: 1px solid rgba(208, 188, 255, 0.28);
+  box-shadow:
+    0 3px 10px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+
+  /* Text colors from your vars */
+  color: var(--text);
+}
+
+/* Headings & links inside the card */
+.about-card h2 {
+  margin: 6px 0 14px;
+  color: black;
+  letter-spacing: 0.2px;
+}
+
+.about-card p {
+  margin: 10px 0 0;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+/* Dark mode variant: deeper glass, still violet */
+.dark .about-card {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(139, 124, 255, 0.16),  /* accent tint */
+      rgba(22, 22, 29, 0.60)      /* dark glass */
+    );
+  border: 1px solid rgba(58, 53, 96, 0.3);
+  box-shadow:
+    0 10px 20px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  color: var(--text);
+}
+
+.dark .about-card h2 {
+  color: white;
+}
+
+/* Small screens */
+@media (max-width: 600px) {
+  .about-card {
+    padding: 18px 16px;
+    border-radius: 14px;
+  }
+}
+
 
 /* ========= DARK MODE ========= */
 .dark body { background: #0f0f13; color: #ececf1; }
