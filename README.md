@@ -4,6 +4,14 @@
 ## Purpose
 Trace was designed to help community safety through data visibility, especially for women and marginalized groups. Each report contributes to identifying unsafe areas, empowering individuals to make informed decisions.
 
+## Live Website
+Access it here: https://trace-6vjy.onrender.com/
+
+### You can:
+- View reported harassment locations on the map
+- Click anywhere to submit a new report
+- See real-time community data across different areas
+
 ## APIs Used
 - OpenStreetMap API: For displaying interactive maps
 - HTML5 Geolocation API: For detecting the user's live location
