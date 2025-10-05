@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" class="">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -12,11 +13,12 @@
         } else {
           document.documentElement.classList.remove('dark');
         }
-      } catch (_) {}
+      } catch (_) { }
     })();
   </script>
   <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
   <!-- NAVBAR (identical to index.html) -->
   <header>
@@ -34,13 +36,83 @@
       <button id="themeToggle" aria-label="Toggle dark mode" title="Toggle theme">🌙</button>
     </nav>
 
-  <main class="about-page">
-    <section class="about-card">
-      <h2>Resources</h2>
-      <p>Find support services, reporting options, and safety tips curated for the community.</p>
-    </section>
-  </main>
+    <main class="about-page">
+      <section class="about-card">
+        <h2>Resources</h2>
+        <p class="emergency-note"><strong>If you are in immediate danger, please call <a href="tel:911">911</a>
+            immediately.</strong></p>
+        <p>Find trusted local and national support services, crisis lines, and reporting options to help ensure safety
+          and access to justice.</p>
 
-  <script src="script.js"></script>
+        <!-- REPORTING -->
+        <div class="resource-section">
+          <h3>📄 Reporting</h3>
+          <p>If you’ve experienced or witnessed harassment or violence, these services can help you file a report
+            safely.</p>
+          <ul>
+            <li><strong>Ottawa Police Service</strong> — <a
+                href="https://www.ottawapolice.ca/en/reports-and-requests/file-a-report.aspx" target="_blank"
+                rel="noopener">File a police report</a> · <a
+                href="https://www.coplogic.ca/dors/en/filing/submitreport?dynparam=1759681782665#prefilingQuestionsAnchor1"
+                target="_blank" rel="noopener">Hate-motivated incidents</a> · Non-emergency: <a
+                href="tel:16132361222">613-236-1222</a></li>
+            <li><strong>OC Transpo (Transit)</strong> — <a
+                href="https://secure.coplogic.com/dors/en/filing/submitreport?dynparam=1759682049568" target="_blank"
+                rel="noopener">Report incidents on transit</a> · <a href="https://www.octranspo.com/en/contact-us/"
+                target="_blank" rel="noopener">More contact options</a></li>
+            <li><strong>Ontario Human Rights Tribunal</strong> — <a href="https://tribunalsontario.ca/hrto/"
+                target="_blank" rel="noopener">File a human rights application</a></li>
+          </ul>
+        </div>
+
+        <!-- CRISIS SUPPORT -->
+        <div class="resource-section">
+          <h3>💬 24/7 Crisis Support</h3>
+          <p>Confidential crisis lines available any time, for anyone in distress or needing immediate help.</p>
+          <ul>
+            <li><strong>211 Ontario</strong> — Connect with local services 24/7: <a href="tel:211">Call 211</a> · <a
+                href="https://211ontario.ca/search/" target="_blank" rel="noopener">Search online</a></li>
+            <li><strong>Victim Services of Ottawa</strong> — <a href="tel:16132382762">613-238-2762</a> · <a
+                href="https://ovs-svo.com/" target="_blank" rel="noopener">victimservicesottawa.ca</a></li>
+            <li><strong>9-8-8 Suicide Crisis Helpline</strong> — <a href="tel:988">Call 988</a> · <a
+                href="https://988.ca/" target="_blank" rel="noopener">988.ca</a></li>
+          </ul>
+        </div>
+
+        <!-- SEXUAL VIOLENCE -->
+        <div class="resource-section">
+          <h3>🌿 Sexual Violence & Gender-Based Violence</h3>
+          <p>Free, confidential support for survivors of sexual assault and domestic or partner abuse.</p>
+          <ul>
+            <li><strong>Sexual Assault Support Centre of Ottawa (SASC)</strong> — 24/7 line: <a
+                href="tel:16132342266">613-234-2266</a> · <a href="https://sascottawa.com" target="_blank"
+                rel="noopener">sascottawa.com</a></li>
+            <li><strong>Ottawa Hospital – Sexual Assault & Partner Abuse Care Program</strong> — 24/7 on-call team;
+              clinic: <a href="tel:16137985555,,13770">613-798-5555 x13770</a> · <a
+                href="https://www.ottawahospital.on.ca/en/clinical-services/deptpgrmcs/programs/sexual-assault-and-partner-abuse-care-program/"
+                target="_blank" rel="noopener">Program info</a></li>
+            <li><strong>ShelterSafe</strong> — Find shelters for women across Canada: <a href="https://sheltersafe.ca/"
+                target="_blank" rel="noopener">sheltersafe.ca</a></li>
+          </ul>
+        </div>
+
+        <!-- LEGAL -->
+        <div class="resource-section">
+          <h3>⚖️ Legal & Rights Support</h3>
+          <p>Find free or low-cost legal services, information about your rights, and how to get legal representation.
+          </p>
+          <ul>
+            <li><strong>Legal Aid Ontario</strong> — <a href="https://www.legalaid.on.ca/" target="_blank"
+                rel="noopener">legalaid.on.ca</a></li>
+            <li><strong>Community Legal Services of Ottawa</strong> — <a href="https://www.clsottawa.ca/"
+                target="_blank" rel="noopener">communitylegalservicesottawa.ca</a></li>
+          </ul>
+        </div>
+      </section>
+
+    </main>
+
+    <script src="script.js"></script>
 </body>
+
 </html>
