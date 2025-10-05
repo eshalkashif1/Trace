@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Trace – Harassment Reporting Map</title>
 
-  <!-- Prevent theme flash: default LIGHT unless user saved dark -->
   <script>
     (function () {
       try {
@@ -29,11 +28,11 @@
         <img src="trace-logo.png" alt="Trace logo" class="logo">
       </div>
       <ul class="nav-links">
+        <li><a href="home.html">Home</a></li>
         <li><a class="active" href="index.html">Map</a></li>
         <li><a href="about.html">About</a></li>
         <li><a href="resources.html">Resources</a></li>
       </ul>
-      <!-- Theme toggle -->
       <button id="themeToggle" aria-label="Toggle dark mode" title="Toggle theme">🌙</button>
     </nav>
 
@@ -71,7 +70,6 @@
 
           <div class="actions">
             <button id="routeBtn" class="primary">Find Safer Route</button>
-            <button id="openGmapsBtn" type="button" class="secondary">Open in Google Maps</button>
           </div>
         </div>
 
@@ -84,6 +82,8 @@
   <div id="main">
     <aside id="directions">
       <h3>Directions</h3>
+      <!-- tabs will be injected here -->
+      <div id="routeTabs"></div>
       <ol id="steps"></ol>
     </aside>
 
@@ -105,7 +105,7 @@
     <small id="locStatus" style="margin-left:8px;"></small>
   </div>
 
-  <!-- Live location consent modal (anonymous, local only) -->
+  <!-- Live location consent modal -->
   <div id="locOverlay" class="overlay hidden"></div>
   <div id="locConsent" class="modal hidden" role="dialog" aria-labelledby="locTitle" aria-modal="true">
     <h3 id="locTitle">Allow anonymous live location?</h3>
