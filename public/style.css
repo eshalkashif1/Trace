@@ -12,9 +12,9 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: linear-gradient(90deg, rgba(255,255,255,0.95), rgba(245,245,245,0.92));
-  padding: 10px 16px; /* a bit slimmer */
-  border-bottom: 1px solid rgba(0,0,0,0.1);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.95), rgba(248, 241, 255, 0.92));
+  padding: 2px 15px; /* a bit slimmer */
+  border-bottom: 1px solid rgba(0,0,0,0.01);
   box-shadow: 0 2px 6px rgba(0,0,0,0.06);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
