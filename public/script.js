@@ -842,7 +842,7 @@ function drawRoutes(scored){
 function selectRouteByIndex(idx){
  selectedIdx = idx;
  const picked = lastScored.find(s=>s.idx===idx) || lastScored[0];
- renderDirections(picked.route);
+ 
 
 
  routeLayers.forEach(({layer, idx:i}) => {
@@ -863,19 +863,6 @@ function selectRouteByIndex(idx){
 }
 
 
-function renderDirections(route){
- if (!stepsEl) return;
- stepsEl.innerHTML = "";
- if (!route?.legs?.length) return;
- const allSteps = route.legs.flatMap(l => l.steps || []);
- for (const s of allSteps) {
-   const li = document.createElement("li");
-   const text = s.maneuver?.instruction || s.name || "Continue";
-   const dist = s.distance ? `${(s.distance/1000).toFixed(2)} km` : "";
-   li.textContent = `${text}${dist ? ` – ${dist}` : ""}`;
-   stepsEl.appendChild(li);
- }
-}
 
 
 // Tabs
