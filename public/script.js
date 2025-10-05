@@ -1,129 +1,58 @@
 // ================= CONFIG =================
-const API_URL = "https://trace-6vjy.onrender.com/api/reports";
-const OSRM_BASE = "https://router.project-osrm.org"; // demo server (OK for hackathon)
+const API_URL   = "https://trace-6vjy.onrender.com/api/reports";
+const OSRM_BASE = "https://router.project-osrm.org";
 const NOMINATIM = "https://nominatim.openstreetmap.org/search";
-const REVERSE = "https://nominatim.openstreetmap.org/reverse";
+const REVERSE   = "https://nominatim.openstreetmap.org/reverse";
 
-// Ottawa bounds + Carleton bias (for geocoding + map bounds)
-const OTTAWA_BOUNDS = [[45.15, -76.35],[45.62, -75.2]];
+// Ottawa bounds + Carleton bias
+const OTTAWA_BOUNDS   = [[45.15, -76.35],[45.62, -75.2]];
 const CARLETON_CENTRE = [45.3876, -75.6970];
 
-// Risk scoring weights (tweak live)
+// Risk/score knobs
 const REPORT_PENALTY_RADIUS_M = 120;
 const SAMPLE_SPACING_M = 25;
-const ALPHA_TIME = 1;       // weight on duration (s)
-const BETA_RISK = 350;      // weight on risk score
+const ALPHA_TIME = 1;      // seconds weight
+const BETA_RISK  = 350;    // risk weight
 
-// Mock "news-risk zones" near Carleton (adjust weights/radius)
+// Mock “news/lighting” zones (demo)
 const MOCK_RISK_ZONES = [
   { lat: 45.387, lon: -75.699, radius: 140, weight: 2.0, label: "Recent incidents (mock)" },
   { lat: 45.390, lon: -75.693, radius: 120, weight: 1.5, label: "Poor lighting (mock)" },
 ];
 
-// --- Hotspot clustering/visuals ---
-const HOTSPOT_CLUSTER_RADIUS_M = 180;
-const HOTSPOT_MIN_COUNT        = 3;
-const HOTSPOT_BASE_VIS_RADIUS_M = 80;
+// ------- Hotspot clustering config -------
+const HOTSPOT_CLUSTER_RADIUS_M    = 180;
+const HOTSPOT_MIN_COUNT           = 3;
+const HOTSPOT_BASE_VIS_RADIUS_M   = 80;
 const HOTSPOT_RADIUS_PER_REPORT_M = 40;
-const HOTSPOT_MAX_VIS_RADIUS_M = 400;
+const HOTSPOT_MAX_VIS_RADIUS_M    = 400;
 
-// ================= THEME TOGGLE + TILE SWITCHING =================
-let lightTiles, darkTiles;
-
-(function themeInit() {
-  const root = document.documentElement;
-  const btn = document.getElementById('themeToggle');
-  const saved = localStorage.getItem('theme');
-
-  // Default LIGHT unless saved dark
-  if (saved === 'dark') root.classList.add('dark');
-  else root.classList.remove('dark');
-
-  const icon = () => (root.classList.contains('dark') ? '☀️' : '🌙');
-  if (btn) btn.textContent = icon();
-
-  btn && btn.addEventListener('click', () => {
-    root.classList.toggle('dark');
-    localStorage.setItem('theme', root.classList.contains('dark') ? 'dark' : 'light');
-    btn.textContent = icon();
-    if (typeof swapTilesForTheme === 'function') swapTilesForTheme();
-  });
-})();
-
-// ================= MAP SETUP =================
-const map = L.map('map', { maxBounds: OTTAWA_BOUNDS, maxBoundsViscosity: 0.8 })
-  .setView([45.4215, -75.6993], 12); // Ottawa
-
-// Light: CARTO Positron (clean light gray)
-lightTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; OpenStreetMap contributors'
-})
-
-// Dark: Stadia Alidade Smooth Dark (dark with colored features/roads)
-darkTiles = L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
-  attribution: '&copy; OpenStreetMap & Stadia Maps'
-});
-
-// Add initial tiles by theme
-(document.documentElement.classList.contains('dark') ? darkTiles : lightTiles).addTo(map);
-
-// Swap tiles on theme change
-function swapTilesForTheme() {
-  const wantDark = document.documentElement.classList.contains('dark');
-  if (wantDark && map.hasLayer(lightTiles)) {
-    map.removeLayer(lightTiles); darkTiles.addTo(map);
-  } else if (!wantDark && map.hasLayer(darkTiles)) {
-    map.removeLayer(darkTiles); lightTiles.addTo(map);
-  }
+// ================= SMALL HELPERS =================
+function setStatus(msg, type="info"){
+  const s = document.getElementById('routeStatus');
+  if (!s) return;
+  s.textContent = msg || '';
+  s.style.color =
+    type==='error'   ? '#c1121f' :
+    type==='success' ? '#2f9e44' : '#333';
 }
-
-// ================= DOM =================
-const form = document.getElementById('reportForm');
-const saveBtn = document.getElementById('saveBtn');
-const cancelBtn = document.getElementById('cancelBtn');
-const descInput = document.getElementById('incidentDesc');
-const timeInput = document.getElementById('incidentTime');
-const useLocBtn = document.getElementById('useLocationBtn');
-const locStatus = document.getElementById('locStatus');
-
-const fromInput = document.getElementById('fromInput');
-const toInput = document.getElementById('toInput');
-const modeSelect = document.getElementById('mode');
-const avoidRiskChk = document.getElementById('avoidRisk');
-const routeBtn = document.getElementById('routeBtn');
-const useLiveBtn = document.getElementById('useLiveBtn');
-const swapBtn = document.getElementById('swapBtn');
-
-const stepsEl = document.getElementById('steps');
-
-// Live location modal
-const CONSENT_KEY = 'liveLocConsent';
-const locOverlay = document.getElementById('locOverlay');
-const locConsent = document.getElementById('locConsent');
-const allowLocBtn = document.getElementById('allowLocBtn');
-const denyLocBtn = document.getElementById('denyLocBtn');
-
-// ================= STATE =================
-let clickedCoords = null;
-let reports = [];
-let routeLayer = null;
-let altLayers = [];
-let fromMarker = null, toMarker = null;
-let liveMarker = null, liveAccCircle = null, watchId = null;
-let lastRecalcTs = 0;
-
-// Layers
-const riskLayer = L.layerGroup().addTo(map);
-const hotspotsLayer = L.layerGroup().addTo(map);
-
-// Draw mock risk zones (for demo)
-for (const z of MOCK_RISK_ZONES) {
-  L.circle([z.lat, z.lon], { radius: z.radius, color: '#ff6b6b', weight: 1, fillOpacity: 0.1 })
-    .bindTooltip(`${z.label}`)
-    .addTo(riskLayer);
+function setStatusHtml(html, type="info"){
+  const s = document.getElementById('routeStatus');
+  if (!s) return;
+  s.innerHTML = html || '';
+  s.style.color =
+    type==='error'   ? '#c1121f' :
+    type==='success' ? '#2f9e44' : '#333';
 }
-
-// ================= UTIL: Distance & Sampling =================
+function withBusy(btn, busyText, fn){
+  return async () => {
+    const prev = btn.textContent; btn.disabled = true; btn.textContent = busyText;
+    setStatus(busyText + '…');
+    try { const r = await fn(); return r; }
+    catch(e){ console.error(e); const m = e.message || 'Something went wrong.'; setStatus(m,'error'); alert(m); }
+    finally{ btn.disabled = false; btn.textContent = prev; }
+  };
+}
 function toRad(x){ return x*Math.PI/180; }
 function haversineMeters(a, b){
   const R=6371000;
@@ -131,16 +60,6 @@ function haversineMeters(a, b){
   const la1=toRad(a[0]), la2=toRad(b[0]);
   const s = Math.sin(dLat/2)**2 + Math.cos(la1)*Math.cos(la2)*Math.sin(dLon/2)**2;
   return 2*R*Math.asin(Math.sqrt(s));
-}
-function pointToSegMeters(p,a,b){
-  const R = 6371000, lat = toRad((a[0]+b[0])/2);
-  const ax=toRad(a[1])*Math.cos(lat)*R, ay=toRad(a[0])*R;
-  const bx=toRad(b[1])*Math.cos(lat)*R, by=toRad(b[0])*R;
-  const px=toRad(p[1])*Math.cos(lat)*R, py=toRad(p[0])*R;
-  const ABx=bx-ax, ABy=by-ay, APx=px-ax, APy=py-ay;
-  const t = Math.max(0, Math.min(1, (APx*ABx+APy*ABy)/(ABx*ABx+ABy*ABy)));
-  const cx = ax + t*ABx, cy = ay + t*ABy;
-  return Math.hypot(px-cx, py-cy);
 }
 function sampleLine(coords, spacingM=SAMPLE_SPACING_M){
   if (coords.length<2) return coords;
@@ -163,6 +82,62 @@ function sampleLine(coords, spacingM=SAMPLE_SPACING_M){
   out.push(coords[coords.length-1]);
   return out;
 }
+const fmtMin = s => Math.round(s/60);
+
+// ================= MAP =================
+const map = L.map('map', { maxBounds: OTTAWA_BOUNDS, maxBoundsViscosity: 0.8 })
+  .setView([45.4215, -75.6993], 12);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
+
+// Layers
+const riskLayer     = L.layerGroup().addTo(map);
+const hotspotsLayer = L.layerGroup().addTo(map);
+
+// Draw mock risk zones
+for (const z of MOCK_RISK_ZONES) {
+  L.circle([z.lat, z.lon], {
+    radius: z.radius, color: '#ff6b6b', weight: 1, fillOpacity: 0.08
+  }).bindTooltip(`${z.label}`).addTo(riskLayer);
+}
+
+// ================= DOM =================
+const form          = document.getElementById('reportForm');
+const saveBtn       = document.getElementById('saveBtn');
+const cancelBtn     = document.getElementById('cancelBtn');
+const descInput     = document.getElementById('incidentDesc');
+const timeInput     = document.getElementById('incidentTime');
+const useLocBtn     = document.getElementById('useLocationBtn');
+const locStatus     = document.getElementById('locStatus');
+
+const fromInput     = document.getElementById('fromInput');
+const toInput       = document.getElementById('toInput');
+const modeSelect    = document.getElementById('mode');
+const avoidRiskChk  = document.getElementById('avoidRisk');
+const routeBtn      = document.getElementById('routeBtn');
+const useLiveBtn    = document.getElementById('useLiveBtn');
+const swapBtn       = document.getElementById('swapBtn');
+const openGmapsBtn  = document.getElementById('openGmapsBtn');
+
+const stepsEl       = document.getElementById('steps');
+
+// Live location modal
+const CONSENT_KEY   = 'liveLocConsent';
+const locOverlay    = document.getElementById('locOverlay');
+const locConsent    = document.getElementById('locConsent');
+const allowLocBtn   = document.getElementById('allowLocBtn');
+const denyLocBtn    = document.getElementById('denyLocBtn');
+
+// ================= STATE =================
+let clickedCoords = null;
+let reports = [];
+let routeLayers = []; // one layer per alternative
+let fromMarker = null, toMarker = null;
+let liveMarker = null, liveAccCircle = null, watchId = null;
+let lastRecalcTs = 0;
+let currentBestRoute = null;
+let followLiveOrigin = false;
 
 // ================= HOTSPOTS =================
 function clusterReports(points, radiusM) {
@@ -189,11 +164,13 @@ function clusterReports(points, radiusM) {
         }
       }
     }
-    clusters.push({ lat: cLat, lon: cLon, count: members.length, members });
+    clusters.push({ lat: cLat, lon: cLon, count: members.length });
   }
   return clusters;
 }
-
+function bringHotspotsToFront(){
+  hotspotsLayer.eachLayer(l => l.bringToFront && l.bringToFront());
+}
 function drawHotspots() {
   hotspotsLayer.clearLayers();
   if (!reports?.length) return;
@@ -202,7 +179,6 @@ function drawHotspots() {
     reports.map(r => ({ lat: r.lat, lon: r.lon })),
     HOTSPOT_CLUSTER_RADIUS_M
   );
-
   const strong = clusters.filter(c => c.count >= HOTSPOT_MIN_COUNT);
   for (const c of strong) {
     const extra = Math.max(0, c.count - HOTSPOT_MIN_COUNT + 1);
@@ -226,6 +202,7 @@ function drawHotspots() {
       radius: 3, color: '#e03131', weight: 2, fillOpacity: 0.9
     }).addTo(hotspotsLayer);
   }
+  bringHotspotsToFront();
 }
 
 // ================= REPORTS =================
@@ -233,14 +210,13 @@ async function loadReports() {
   try {
     const res = await fetch(API_URL);
     const data = await res.json();
-    reports = data;
+    reports = data || [];
     data.forEach(r => addReportMarker(r));
     drawHotspots();
   } catch (err) {
     console.error("Error loading reports:", err);
   }
 }
-
 function addReportMarker(r) {
   const marker = L.marker([r.lat, r.lon]).addTo(map);
   const occurred = r.occurred_at ? new Date(r.occurred_at).toLocaleString() : "";
@@ -252,54 +228,50 @@ function addReportMarker(r) {
 }
 
 // ================= REPORT FORM =================
-map.on('click', async (e) => {
+map.on('click', (e) => {
   clickedCoords = e.latlng;
   const activeEl = document.activeElement;
-  if (activeEl === toInput || activeEl === fromInput) {
-    if (activeEl === toInput) {
-      setToPoint([clickedCoords.lat, clickedCoords.lng], true);
-    } else {
-      setFromPoint([clickedCoords.lat, clickedCoords.lng], true);
-    }
+  if (activeEl === toInput) {
+    setToPoint([clickedCoords.lat, clickedCoords.lng], true);
+  } else if (activeEl === fromInput) {
+    setFromPoint([clickedCoords.lat, clickedCoords.lng], true);
+    followLiveOrigin = false; // manual point
   } else {
     form.classList.remove('hidden');
   }
 });
 
-saveBtn.addEventListener('click', async () => {
+saveBtn?.addEventListener('click', async () => {
   if (!clickedCoords) return;
-
-  const report = {
+  const payload = {
     lat: clickedCoords.lat,
     lon: clickedCoords.lng,
     description: descInput.value || "No description"
   };
-
   try {
     await fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(report),
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
     });
-
-    addReportMarker({ ...report, occurred_at: new Date().toISOString() });
-    reports.push(report);
+    addReportMarker({ ...payload, occurred_at: new Date().toISOString() });
+    reports.push(payload);
     drawHotspots();
     resetForm();
+    setStatus("Report saved. Thank you for contributing.", "success");
   } catch (err) {
     console.error("Error saving report:", err);
+    setStatus("Failed to save report.", "error");
   }
 });
-
-cancelBtn.addEventListener('click', resetForm);
+cancelBtn?.addEventListener('click', resetForm);
 function resetForm() {
-  form.classList.add('hidden');
-  descInput.value = '';
-  timeInput.value = '';
+  form?.classList?.add('hidden');
+  if (descInput) descInput.value = '';
+  if (timeInput) timeInput.value = '';
   clickedCoords = null;
 }
 
-// "Use current location" in report form (privacy jitter)
+// "Use current location" inside report form (jittered privacy)
 function fuzzCoord(lat, lng, meters = 120) {
   const r = meters / 111320;
   const u = Math.random(), v = Math.random();
@@ -310,11 +282,8 @@ function fuzzCoord(lat, lng, meters = 120) {
   return { lat: lat + latOff, lng: lng + lngOff };
 }
 useLocBtn?.addEventListener('click', () => {
-  if (!navigator.geolocation) {
-    if (locStatus) locStatus.textContent = 'Geolocation not supported.';
-    return;
-  }
-  if (locStatus) locStatus.textContent = 'Locating…';
+  if (!navigator.geolocation) { locStatus.textContent = 'Geolocation not supported.'; return; }
+  locStatus.textContent = 'Locating…';
   navigator.geolocation.getCurrentPosition(
     (pos) => {
       const { latitude, longitude, accuracy } = pos.coords;
@@ -324,9 +293,9 @@ useLocBtn?.addEventListener('click', () => {
         .addTo(map).bindPopup(`Your location (±${Math.round(accuracy)}m)`).openPopup();
       map.setView([lat, lng], 15);
       form.classList.remove('hidden');
-      if (locStatus) locStatus.textContent = 'Location set.';
+      locStatus.textContent = 'Location set.';
     },
-    () => { if (locStatus) locStatus.textContent = 'Could not get location.'; },
+    () => { locStatus.textContent = 'Could not get location.'; },
     { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
   );
 });
@@ -340,7 +309,7 @@ async function geocode(q) {
   });
   const res = await fetch(`${NOMINATIM}?${params.toString()}`, { headers: { "Accept": "application/json" } });
   const data = await res.json();
-  if (!data.length) throw new Error("Not found");
+  if (!data.length) throw new Error("Address not found in Ottawa bounds.");
   const { lat, lon, display_name } = data[0];
   return { lat: +lat, lon: +lon, label: display_name };
 }
@@ -355,9 +324,11 @@ async function reverseGeocode(lat, lon) {
 async function setFromPoint([lat, lon], doReverse=false) {
   if (!fromMarker) {
     fromMarker = L.marker([lat, lon], { draggable: true }).addTo(map);
+    fromMarker.on('dragstart', () => followLiveOrigin = false);
     fromMarker.on('dragend', async () => {
       const ll = fromMarker.getLatLng();
       fromInput.value = await reverseGeocode(ll.lat, ll.lng);
+      followLiveOrigin = false;
       recalcRouteDebounced();
     });
   } else fromMarker.setLatLng([lat, lon]);
@@ -375,28 +346,39 @@ async function setToPoint([lat, lon], doReverse=false) {
   if (doReverse) toInput.value = await reverseGeocode(lat, lon);
 }
 
+// Stop live-follow if user types custom “From”
+fromInput?.addEventListener('input', () => { followLiveOrigin = false; });
+
 // ================= LIVE LOCATION (for routing) =================
-function showLocModal() {
-  locOverlay.classList.remove('hidden');
-  locConsent.classList.remove('hidden');
-}
-function hideLocModal() {
-  locOverlay.classList.add('hidden');
-  locConsent.classList.add('hidden');
-}
+function showLocModal() { locOverlay?.classList?.remove('hidden'); locConsent?.classList?.remove('hidden'); }
+function hideLocModal() { locOverlay?.classList?.add('hidden');  locConsent?.classList?.add('hidden'); }
+
 function startLive() {
   if (!('geolocation' in navigator)) return alert('Geolocation not supported.');
   watchId = navigator.geolocation.watchPosition(
-    (pos) => {
+    async (pos) => {
       const { latitude: lat, longitude: lon, accuracy } = pos.coords;
+
       if (!liveMarker) {
         const icon = L.divIcon({ className: 'live-marker' });
         liveMarker = L.marker([lat, lon], { icon, interactive: false }).addTo(map);
-        liveAccCircle = L.circle([lat, lon], { radius: Math.max(accuracy, 15), weight: 1, opacity: 0.6, fillOpacity: 0.08 }).addTo(map);
+        liveAccCircle = L.circle([lat, lon], {
+          radius: Math.max(accuracy, 15), weight: 1, opacity: 0.6, fillOpacity: 0.08
+        }).addTo(map);
         map.setView([lat, lon], Math.max(map.getZoom(), 14));
+
+        if (!fromInput.value.trim() || /live/i.test(fromInput.value)) {
+          followLiveOrigin = true;
+          await setFromPoint([lat, lon], false);
+          fromInput.value = "Live location";
+        }
       } else {
         liveMarker.setLatLng([lat, lon]);
         liveAccCircle.setLatLng([lat, lon]).setRadius(Math.max(accuracy, 15));
+      }
+
+      if (followLiveOrigin) {
+        await setFromPoint([lat, lon], false);
       }
       recalcRouteDebounced();
     },
@@ -407,59 +389,53 @@ function startLive() {
     { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
   );
 }
-if (allowLocBtn && denyLocBtn) {
-  allowLocBtn.addEventListener('click', () => {
-    localStorage.setItem(CONSENT_KEY, 'granted');
-    hideLocModal();
-    startLive();
-  });
-  denyLocBtn.addEventListener('click', () => {
-    localStorage.setItem(CONSENT_KEY, 'denied');
-    hideLocModal();
-  });
-}
+allowLocBtn?.addEventListener('click', () => { localStorage.setItem(CONSENT_KEY, 'granted'); hideLocModal(); startLive(); });
+denyLocBtn?.addEventListener('click', () => { localStorage.setItem(CONSENT_KEY, 'denied');  hideLocModal(); });
 (function bootLive(){
   const saved = localStorage.getItem(CONSENT_KEY);
   if (saved === 'granted') startLive();
   else if (!saved) setTimeout(showLocModal, 400);
 })();
-useLiveBtn.addEventListener('click', async () => {
+useLiveBtn?.addEventListener('click', async () => {
   if (liveMarker) {
     const { lat, lng } = liveMarker.getLatLng();
-    await setFromPoint([lat, lng], true);
+    followLiveOrigin = true;
+    await setFromPoint([lat, lng], false);
+    fromInput.value = "Live location";
+    recalcRouteDebounced();
   } else {
+    followLiveOrigin = true;
     showLocModal();
   }
 });
 
-// ================= ROUTING (OSRM + Risk) =================
-routeBtn.addEventListener('click', recalcRouteDebounced);
-swapBtn.addEventListener('click', async () => {
+// ================= ROUTING (OSRM + scoring) =================
+routeBtn?.addEventListener('click', withBusy(routeBtn, "Finding routes", doRoute));
+swapBtn?.addEventListener('click', async () => {
   const f = fromInput.value, t = toInput.value;
   fromInput.value = t; toInput.value = f;
   if (fromMarker && toMarker) {
     const fl = fromMarker.getLatLng(), tl = toMarker.getLatLng();
     fromMarker.setLatLng(tl); toMarker.setLatLng(fl);
   }
+  followLiveOrigin = false;
   recalcRouteDebounced();
 });
 
 let recalcTimer = null;
 function recalcRouteDebounced() {
   const now = Date.now();
-  if (now - lastRecalcTs < 1500) {
+  if (now - lastRecalcTs < 900) {
     clearTimeout(recalcTimer);
-    recalcTimer = setTimeout(doRoute, 1500);
+    recalcTimer = setTimeout(doRoute, 900);
   } else {
     doRoute();
     lastRecalcTs = now;
   }
 }
-
 async function resolvePointFromInput(inputEl, markerEl) {
-  if (inputEl === fromInput && liveMarker && (inputEl.value.trim()==='' || inputEl.value.toLowerCase().includes('live'))) {
+  if (inputEl === fromInput && followLiveOrigin && liveMarker) {
     const { lat, lng } = liveMarker.getLatLng();
-    await setFromPoint([lat, lng], true);
     return [lat, lng];
   }
   if (markerEl) return [markerEl.getLatLng().lat, markerEl.getLatLng().lng];
@@ -472,7 +448,8 @@ async function resolvePointFromInput(inputEl, markerEl) {
 }
 
 async function doRoute() {
-  if (!toInput.value && !toMarker) return;
+  setStatus("Planning routes…");
+  if (!toInput.value && !toMarker) { setStatus("Enter a destination.", "error"); return; }
 
   let fromLatLng, toLatLng;
   try {
@@ -489,28 +466,34 @@ async function doRoute() {
   try {
     toLatLng = await resolvePointFromInput(toInput, toMarker);
   } catch(e) {
-    if (!toInput.value) return;
-    const g = await geocode(toInput.value.trim());
-    toLatLng = [g.lat, g.lon];
-    await setToPoint(toLatLng, false);
+    setStatus("Couldn’t resolve destination.", "error");
+    return;
   }
 
-  const mode = modeSelect.value; // 'foot' or 'driving'
+  // 🔧 Map UI 'foot' -> OSRM 'walking'
+  const profile = (modeSelect.value === 'foot') ? 'walking' : 'driving';
   const coordsStr = `${fromLatLng[1]},${fromLatLng[0]};${toLatLng[1]},${toLatLng[0]}`;
-  const url = `${OSRM_BASE}/route/v1/${mode}/${coordsStr}?alternatives=true&steps=true&overview=full&geometries=geojson`;
+  const url = `${OSRM_BASE}/route/v1/${profile}/${coordsStr}?alternatives=true&steps=true&overview=full&geometries=geojson`;
+
   let json;
   try {
     const res = await fetch(url);
     json = await res.json();
   } catch (e) {
-    console.error("OSRM fetch failed", e);
+    setStatus("Routing service failed to respond.", "error");
     return;
   }
-  if (!json || !json.routes || !json.routes.length) return;
 
-  const avoidRisk = avoidRiskChk.checked;
-  const scored = json.routes.map(r => {
-    const coords = r.geometry.coordinates;
+  if (!json) { setStatus("Routing error: empty response.", "error"); return; }
+  if (json.code && json.code !== 'Ok') {
+    setStatus(`Routing error: ${json.code}${json.message ? ' – '+json.message : ''}`, "error");
+    return;
+  }
+  if (!json.routes || !json.routes.length) { setStatus("No routes found.", "error"); return; }
+
+  const avoidRisk = !!avoidRiskChk?.checked;
+  const scored = json.routes.map((r, idx) => {
+    const coords = r.geometry.coordinates; // [lng,lat]
     const samples = sampleLine(coords);
     let risk = 0;
     if (avoidRisk) {
@@ -528,31 +511,46 @@ async function doRoute() {
     }
     const time = r.duration;
     const score = ALPHA_TIME * time + (avoidRisk ? BETA_RISK * risk : 0);
-    return { route: r, risk, time, score };
+    return { idx, route: r, risk, time, score };
   }).sort((a,b) => a.score - b.score);
 
   drawRoutes(scored);
-  renderDirections(scored[0].route);
+  selectRoute(scored[0]);
+
+  const n = scored.length;
+  setStatus(`Found ${n} route${n>1?'s':''}. Best ≈ ${fmtMin(scored[0].time)} min • risk ${scored[0].risk.toFixed(1)} • score ${Math.round(scored[0].score)}.`, "success");
+
+  bringHotspotsToFront();
 }
 
+function clearRoutes() {
+  routeLayers.forEach(l => map.removeLayer(l));
+  routeLayers = [];
+  stepsEl.innerHTML = '';
+  currentBestRoute = null;
+}
 function drawRoutes(scored) {
-  if (routeLayer) { map.removeLayer(routeLayer); routeLayer = null; }
-  altLayers.forEach(l => map.removeLayer(l)); altLayers = [];
+  clearRoutes();
 
-  const best = scored[0].route;
-  routeLayer = L.geoJSON(best.geometry, {
-    style: { color: '#0077b6', weight: 6, opacity: 0.9 }
-  }).addTo(map);
+  scored.forEach((s, i) => {
+    const styleBest = { color: '#0077b6', weight: 6, opacity: 0.95 };
+    const styleAlt  = { color: '#ffa94d', weight: 4, opacity: 0.75, dashArray: "6 8" };
+    const layer = L.geoJSON(s.route.geometry, { style: i===0 ? styleBest : styleAlt })
+      .bindTooltip(`Route ${i+1}: ~${fmtMin(s.time)} min • risk ${s.risk.toFixed(1)} • score ${Math.round(s.score)}`, { sticky: true })
+      .on('click', () => selectRoute(s))
+      .addTo(map);
+    routeLayers.push(layer);
+  });
 
-  for (let i=1;i<Math.min(3, scored.length);i++){
-    const lay = L.geoJSON(scored[i].route.geometry, {
-      style: { color: '#ffa94d', weight: 4, opacity: 0.7, dashArray: "6 8" }
-    }).addTo(map);
-    altLayers.push(lay);
+  // Fit to best
+  if (routeLayers[0]) {
+    const bb = routeLayers[0].getBounds();
+    if (!map.getBounds().contains(bb)) map.fitBounds(bb, { padding: [30,30] });
   }
-
-  const bb = routeLayer.getBounds();
-  if (!map.getBounds().contains(bb)) map.fitBounds(bb, { padding: [30,30] });
+}
+function selectRoute(scoredRoute){
+  currentBestRoute = scoredRoute.route;
+  renderDirections(scoredRoute.route);
 }
 
 function renderDirections(route) {
@@ -563,14 +561,74 @@ function renderDirections(route) {
     const li = document.createElement('li');
     const text = s.maneuver?.instruction || s.name || 'Continue';
     const dist = s.distance ? `${(s.distance/1000).toFixed(2)} km` : '';
-    li.textContent = `${text} ${dist ? `– ${dist}` : ''}`;
+    li.textContent = `${text}${dist ? ` – ${dist}` : ''}`;
     stepsEl.appendChild(li);
   }
 }
 
+// ================= GOOGLE MAPS EXPORT =================
+function buildGmapsUrlFromRoute() {
+  if (!currentBestRoute) return null;
+  const coords = currentBestRoute.geometry.coordinates; // [lng,lat]
+  if (!coords?.length) return null;
+
+  const origin = `${coords[0][1].toFixed(6)},${coords[0][0].toFixed(6)}`;
+  const dest   = `${coords[coords.length-1][1].toFixed(6)},${coords[coords.length-1][0].toFixed(6)}`;
+
+  const sampled = sampleLine(coords, 700);
+  const mids = sampled.slice(1, sampled.length - 1);
+  const maxVia = 20;
+  const step = Math.max(1, Math.ceil(mids.length / maxVia));
+  const viaPoints = mids
+    .filter((_, i) => i % step === 0)
+    .map(([lng, lat]) => `via:${lat.toFixed(6)},${lng.toFixed(6)}`);
+
+  const gMode = (modeSelect?.value === 'foot') ? 'walking' : 'driving';
+  const url = new URL('https://www.google.com/maps/dir/');
+  url.searchParams.set('api', '1');
+  url.searchParams.set('origin', origin);
+  url.searchParams.set('destination', dest);
+  url.searchParams.set('travelmode', gMode);
+  if (viaPoints.length) url.searchParams.set('waypoints', viaPoints.join('|'));
+  return url.toString();
+}
+
+// Open a blank tab synchronously (popup-friendly), then navigate after awaits
+openGmapsBtn?.addEventListener('click', async (e) => {
+  e.preventDefault();
+  const newTab = window.open('about:blank', '_blank'); // opened during user gesture
+  setStatus('Preparing Google Maps…');
+
+  try {
+    let url = buildGmapsUrlFromRoute();
+    if (!url) {
+      const [fLat, fLon] = await resolvePointFromInput(fromInput, fromMarker);
+      const [tLat, tLon] = await resolvePointFromInput(toInput, toMarker);
+      const u = new URL('https://www.google.com/maps/dir/');
+      u.searchParams.set('api','1');
+      u.searchParams.set('origin', `${fLat.toFixed(6)},${fLon.toFixed(6)}`);
+      u.searchParams.set('destination', `${tLat.toFixed(6)},${tLon.toFixed(6)}`);
+      u.searchParams.set('travelmode', (modeSelect?.value === 'foot') ? 'walking' : 'driving');
+      url = u.toString();
+    }
+    if (newTab) {
+      newTab.location = url; // navigate pre-opened tab
+      setStatus("Opened in Google Maps.", "success");
+    } else {
+      setStatusHtml(`Popup blocked. <a href="${url}" target="_blank" rel="noopener">Open Google Maps</a>`, "error");
+    }
+  } catch (err) {
+    console.error(err);
+    if (newTab && !newTab.closed) newTab.close();
+    setStatus("Set start and destination first.", "error");
+  }
+});
+
 // ================= INIT =================
 loadReports();
-
-// Prefill “To” with Carleton for demo
 toInput.value = "Carleton University, Ottawa";
 setToPoint(CARLETON_CENTRE, false);
+setStatus("Type start & end (press Enter) or click “Find Safer Route”.");
+
+
+
