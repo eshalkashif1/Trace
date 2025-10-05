@@ -28,3 +28,4 @@ Access it here: https://trace-6vjy.onrender.com/
 - Live location tracking  
 - Privacy-preserving location blurring  
 - Resources and support links for impacted individuals
+- Light and dark mode
