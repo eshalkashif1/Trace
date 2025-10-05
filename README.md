@@ -33,8 +33,7 @@ http://localhost:3000
 
 
 ### 🌟 Features
-#### Reeporting
-- click the map _or_ use the floating **Quick Report** button (uses your current location).
+- Click the map _or_ use the floating **Quick Report** button (uses your current location).
 - View reported harassment locations on the map
 - Click anywhere to submit a new report
 - See real-time community data across different areas
