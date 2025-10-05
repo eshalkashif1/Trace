@@ -33,7 +33,7 @@
   --accent: #8b7bff;
 
   /* controls & chips */
-  --ctl-bg: #1b1e27;   /* input & leaflet control background */
+  --ctl-bg: #1b1e27;   
   --ctl-fg: #eaeafd;
 
   /* FAB */
@@ -56,7 +56,7 @@ body {
 /* Utilities */
 .hidden { 
   display: none !important; 
-  pointer-events: none !important;  /* belt & suspenders so it never traps clicks */
+  pointer-events: none !important;  
 }
 
 /* ===== NAVBAR =====*/
@@ -146,7 +146,7 @@ body {
 .fab {
   position: fixed;
   right: 16px;
-  bottom: 16px; /* for iOS safe area: bottom: calc(16px + env(safe-area-inset-bottom)); */
+  bottom: 16px; 
   z-index: 1150;
   padding: 10px 14px;
   border: 1px solid var(--fab-border);
@@ -217,9 +217,7 @@ body {
   transition: box-shadow .15s ease, border-color .15s ease, background .2s ease;
 }
 
-/* nicer / “more color” description */
 .report-body textarea {
-  /* subtle accent ring on hover/focus */
   box-shadow: 0 0 0 0 rgba(0,0,0,0);
 }
 .report-body input:focus,
@@ -252,8 +250,6 @@ body {
 .btn-primary:hover { filter: brightness(1.03); }
 .btn-primary:active { transform: translateY(1px); }
 
-/* keep your existing overlay if you want to dim the map when open */
-
 
 /* ===== LIVE LOCATION MODAL ===== */
 .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 1200; }
@@ -279,7 +275,6 @@ body {
   70%  { box-shadow: 0 0 0 18px rgba(46,204,113,0); }
   100% { box-shadow: 0 0 0 0 rgba(46,204,113,0); }
 }
-/* Make dark basemap a bit lighter & lower contrast */
 .dark .leaflet-tile-pane {
   filter: brightness(1.22) contrast(0.95) saturate(1.05);
 }
@@ -292,7 +287,7 @@ body {
   #mapWrap { height: 64vh; position: relative; }
 }
 
-/* ===== ABOUT PAGE: Glassy Violet Card ===== */
+/* ===== ABOUT PAGE ===== */
 .about-page {
   max-width: 1100px;
   margin: 28px auto;
@@ -301,33 +296,27 @@ body {
 }
 
 .about-card {
-  /* Layout */
   margin: 0 auto;
   max-width: 1200px;
   padding: 22px 22px;
   border-radius: 16px;
 
-  /* Frosted glass look */
   background:
     linear-gradient(
       135deg,
-      rgba(215, 198, 255, 0.14),   /* violet tint */
-      rgba(255, 255, 255, 0.70)   /* milky glass */
+      rgba(215, 198, 255, 0.14), 
+      rgba(255, 255, 255, 0.70)   
     );
   backdrop-filter: blur(14px) saturate(120%);
   -webkit-backdrop-filter: blur(14px) saturate(120%);
 
-  /* Subtle violet border + soft shadow */
   border: 1px solid rgba(208, 188, 255, 0.28);
   box-shadow:
     0 3px 10px rgba(0, 0, 0, 0.12),
     inset 0 1px 0 rgba(255, 255, 255, 0.35);
-
-  /* Text colors from your vars */
   color: var(--text);
 }
 
-/* Headings & links inside the card */
 .about-card h2 {
   margin: 6px 0 14px;
   color: black;
@@ -356,13 +345,12 @@ body {
   text-decoration: underline;
 }
 
-/* Dark mode variant: deeper glass, still violet */
 .dark .about-card {
   background:
     linear-gradient(
       135deg,
-      rgba(139, 124, 255, 0.16),  /* accent tint */
-      rgba(22, 22, 29, 0.60)      /* dark glass */
+      rgba(139, 124, 255, 0.16),  
+      rgba(22, 22, 29, 0.60)      
     );
   border: 1px solid rgba(58, 53, 96, 0.3);
   box-shadow:
@@ -467,9 +455,8 @@ body {
   max-width: 1000px;
 }
 
-/* TEXT HALF */
 .about-text {
-  width: 63%;              /* exactly half the width */
+  width: 63%;            
   line-height: 1.6;
   color: #222;
 }
