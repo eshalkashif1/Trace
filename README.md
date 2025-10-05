@@ -8,6 +8,8 @@ Trace was designed to help community safety through data visibility, especially 
 Access it here: https://trace-6vjy.onrender.com/
 
 ### 🌟 Features
+#### Reeporting
+- click the map _or_ use the floating **Quick Report** button (uses your current location).
 - View reported harassment locations on the map
 - Click anywhere to submit a new report
 - See real-time community data across different areas
