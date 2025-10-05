@@ -86,31 +86,16 @@
     <label>Description:</label>
     <textarea id="incidentDesc" rows="3" placeholder="Describe what happened (optional)"></textarea><br>
     <button id="saveBtn">Save</button>
-<<<<<<< HEAD
-    <button id="cancelBtn">Cancel</button>
-
-    <!--<button id="useLocationBtn" type="button">Use current location</button>-->
-    <!--<small id="locStatus" style="margin-left:8px;"></small>-->
-    <button id="quickReportBtn" class="fab" title="Create report at my location">📍 Report here</button>
-
-
-
-=======
     <button id="cancelBtn" class="secondary">Cancel</button>
     <button id="useLocationBtn" type="button">Use current location</button>
     <small id="locStatus" style="margin-left:8px;"></small>
->>>>>>> 481b794c8ccfe8439c7dda85485fef124b2c9238
   </div>
 
   <!-- Live location consent modal (anonymous, local only) -->
   <div id="locOverlay" class="overlay hidden"></div>
   <div id="locConsent" class="modal hidden" role="dialog" aria-labelledby="locTitle" aria-modal="true">
     <h3 id="locTitle">Allow anonymous live location?</h3>
-<<<<<<< HEAD
-    <p>Your location is used only on this device to show a moving dot. It is <b>not</b> uploaded.</p>
-=======
     <p>Your location is used only on this device to show a moving dot and update routes. It is <b>not</b> uploaded.</p>
->>>>>>> 481b794c8ccfe8439c7dda85485fef124b2c9238
     <div class="modal-actions">
       <button id="allowLocBtn">Allow</button>
       <button id="denyLocBtn" class="secondary">Not now</button>
