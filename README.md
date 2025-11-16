@@ -62,7 +62,7 @@ http://localhost:3000
 - **Database:** SQLite
 - **Hosting:** Render
 
-## 📸 Screenshots
+## Screenshots
 
 <img width="1440" height="801" alt="Screenshot 2025-10-05 at 2 34 02 PM" src="https://github.com/user-attachments/assets/64b113ad-75c6-4cf5-a5f2-740d69d252a4" />
 
